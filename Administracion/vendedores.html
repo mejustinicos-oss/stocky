@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Usuarios</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+    <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main>
+    <div class="container">
+      <h1> Gestión de Usuarios</h1>
+
+      <!-- Alerta de acceso solo administrador -->
+      <div id="accessDenied" style="display: none; background: #ffebee; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border-left: 4px solid #c62828;">
+        <h3 style="color: #c62828; margin-bottom: 0.5rem;">🔒 Acceso Denegado</h3>
+        <p style="color: #757575;">Solo los administradores pueden acceder a esta sección.</p>
+      </div>
+
+      <!-- Panel de Control -->
+      <div id="mainContent" class="control-panel">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar por cédula, nombre o email...">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add')">
+          Agregar Usuario
+        </button>
+      </div>
+
+      <!-- Tabla de Usuarios -->
+      <div id="tableSection" class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>CÉDULA</th>
+              <th>NOMBRE</th>
+              <th>EMAIL</th>
+              <th>TELÉFONO</th>
+              <th>ROL</th>
+              <th>ESTADO</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 2rem;">
+                <div style="color: #757575;">Cargando usuarios...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal para Agregar/Editar Usuario -->
+    <div id="usuarioModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Agregar Usuario</h2>
+          <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
+        <form id="usuarioForm">
+          <div class="alert alert-info">
+            ℹ️ Los usuarios pueden acceder al sistema y generar facturas
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="usuarioCedula">Cédula *</label>
+              <input type="text" id="usuarioCedula" required placeholder="1234567890" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label for="usuarioNombre">Nombre Completo *</label>
+              <input type="text" id="usuarioNombre" required placeholder="Juan Pérez" maxlength="100">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="usuarioEmail">Email *</label>
+              <input type="email" id="usuarioEmail" required placeholder="usuario@stocky.com" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label for="usuarioTelefono">Teléfono *</label>
+              <input type="tel" id="usuarioTelefono" required placeholder="300-123-4567" maxlength="20">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="usuarioRol">Rol *</label>
+              <select id="usuarioRol" required>
+                <option value="">Seleccionar...</option>
+                <option value="Vendedor">Vendedor</option>
+                <option value="Administrador">Administrador</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="usuarioEstado">Estado *</label>
+              <select id="usuarioEstado" required>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group password-toggle">
+            <label for="usuarioPassword">Contraseña *</label>
+            <input type="password" id="usuarioPassword" required placeholder="Mínimo 6 caracteres" minlength="6">
+            <button type="button" class="password-toggle-btn" onclick="togglePassword()">Mostrar</button>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-success">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_URL = 'http://localhost/stocky/api';
+    
+    let usuarios = [];
+    let currentEditCedula = null;
+    let userRole = null;
+
+    // Verificar rol de usuario al cargar
+    async function verificarAcceso() {
+      try {
+        const response = await fetch(`${API_URL}/verificar-sesion.php`, {
+          credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (!result.success) {
+          window.location.href = '../index.html';
+          return false;
+        }
+
+        userRole = result.data.user.rol;
+
+        // Si NO es administrador, mostrar mensaje de acceso denegado
+        if (userRole !== 'Administrador') {
+          document.getElementById('accessDenied').style.display = 'block';
+          document.getElementById('mainContent').style.display = 'none';
+          document.getElementById('tableSection').style.display = 'none';
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Error:', error);
+        window.location.href = '../index.html';
+        return false;
+      }
+    }
+
+    // Cargar usuarios desde la API
+    async function cargarUsuarios() {
+      try {
+        const response = await fetch(`${API_URL}/usuarios.php`, {
+          credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          usuarios = result.data;
+          renderTable();
+        } else {
+          mostrarError(result.message);
+          renderTable([]);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al cargar usuarios');
+        renderTable([]);
+      }
+    }
+
+    // Renderizar tabla
+    function renderTable(filteredUsuarios = usuarios) {
+      const tbody = document.getElementById('tableBody');
+
+      if (filteredUsuarios.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty-state">
+              <p style="font-size: 3rem;">👥</p>
+              <p style="font-size: 1.1rem; font-weight: 600;">No se encontraron usuarios</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filteredUsuarios.map(usuario => `
+        <tr>
+          <td><strong>${usuario.cedula}</strong></td>
+          <td>${usuario.nombre}</td>
+          <td>${usuario.email}</td>
+          <td>${usuario.telefono}</td>
+          <td>
+            <span class="badge ${usuario.rol === 'Administrador' ? 'badge-admin' : 'badge-success'}">
+              ${usuario.rol === 'Administrador' ? '👑 ' : ''}${usuario.rol}
+            </span>
+          </td>
+          <td>
+            <span class="badge ${usuario.estado === 'Activo' ? 'badge-success' : 'badge-danger'}">
+              ${usuario.estado}
+            </span>
+          </td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon btn-warning" onclick="editUsuario('${usuario.cedula}')" title="Editar">✏️</button>
+              <button class="btn-icon btn-danger" onclick="deleteUsuario('${usuario.cedula}')" title="Eliminar">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Buscar usuarios
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = usuarios.filter(usuario =>
+        usuario.cedula.toLowerCase().includes(searchTerm) ||
+        usuario.nombre.toLowerCase().includes(searchTerm) ||
+        usuario.email.toLowerCase().includes(searchTerm)
+      );
+      renderTable(filtered);
+    });
+
+    // Abrir modal
+    function openModal(mode, cedula = null) {
+      const modal = document.getElementById('usuarioModal');
+      const form = document.getElementById('usuarioForm');
+      const title = document.getElementById('modalTitle');
+      const cedulaInput = document.getElementById('usuarioCedula');
+
+      form.reset();
+      currentEditCedula = null;
+
+      if (mode === 'edit' && cedula) {
+        const usuario = usuarios.find(u => u.cedula === cedula);
+        if (usuario) {
+          title.textContent = 'Editar Usuario';
+          cedulaInput.value = usuario.cedula;
+          cedulaInput.readOnly = true;
+          document.getElementById('usuarioNombre').value = usuario.nombre;
+          document.getElementById('usuarioEmail').value = usuario.email;
+          document.getElementById('usuarioTelefono').value = usuario.telefono;
+          document.getElementById('usuarioRol').value = usuario.rol;
+          document.getElementById('usuarioEstado').value = usuario.estado;
+          document.getElementById('usuarioPassword').value = usuario.password;
+          currentEditCedula = cedula;
+        }
+      } else {
+        title.textContent = 'Agregar Usuario';
+        cedulaInput.readOnly = false;
+        document.getElementById('usuarioEstado').value = 'Activo';
+      }
+
+      if (mode === 'edit') {
+    // En edición, mostrar placeholder para contraseña
+    document.getElementById('usuarioPassword').placeholder = "Dejar en blanco para no cambiar";
+    document.getElementById('usuarioPassword').required = false;
+} else {
+    document.getElementById('usuarioPassword').placeholder = "Mínimo 6 caracteres";
+    document.getElementById('usuarioPassword').required = true;
+}
+
+      modal.classList.add('active');
+    }
+
+    // Cerrar modal
+    function closeModal() {
+      document.getElementById('usuarioModal').classList.remove('active');
+    }
+
+    // Toggle password
+    function togglePassword() {
+      const passwordInput = document.getElementById('usuarioPassword');
+      const btn = document.querySelector('.password-toggle-btn');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        btn.textContent = 'Ocultar';
+      } else {
+        passwordInput.type = 'password';
+        btn.textContent = 'Mostrar';
+      }
+    }
+
+    // Guardar usuario
+    document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const data = {
+        cedula: document.getElementById('usuarioCedula').value.trim(),
+        nombre: document.getElementById('usuarioNombre').value.trim(),
+        email: document.getElementById('usuarioEmail').value.trim(),
+        telefono: document.getElementById('usuarioTelefono').value.trim(),
+        rol: document.getElementById('usuarioRol').value,
+        estado: document.getElementById('usuarioEstado').value,
+        password: document.getElementById('usuarioPassword').value
+      };
+
+      try {
+        let response;
+        if (currentEditCedula) {
+          response = await fetch(`${API_URL}/usuarios.php`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data)
+          });
+        } else {
+          response = await fetch(`${API_URL}/usuarios.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data)
+          });
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          mostrarExito(result.message);
+          await cargarUsuarios();
+          closeModal();
+        } else {
+          mostrarError(result.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al guardar el usuario');
+      }
+    });
+
+    // Editar usuario
+    function editUsuario(cedula) {
+      openModal('edit', cedula);
+    }
+
+    // Eliminar usuario
+    async function deleteUsuario(cedula) {
+      const usuario = usuarios.find(u => u.cedula === cedula);
+      if (!confirm(`¿Está seguro de eliminar al usuario "${usuario.nombre}"?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/usuarios.php`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ cedula })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          mostrarExito(result.message);
+          await cargarUsuarios();
+        } else {
+          mostrarError(result.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al eliminar el usuario');
+      }
+    }
+
+    // Funciones auxiliares
+    function mostrarExito(mensaje) {
+      alert('✅ ' + mensaje);
+    }
+
+    function mostrarError(mensaje) {
+      alert('❌ ' + mensaje);
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('usuarioModal').addEventListener('click', (e) => {
+      if (e.target.id === 'usuarioModal') {
+        closeModal();
+      }
+    });
+
+    // Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (!confirm('¿Estás seguro de cerrar sesión?')) return;
+      
+      try {
+        await fetch(`${API_URL}/logout.php`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '../index.html';
+      } catch (error) {
+        window.location.href = '../index.html';
+      }
+    });
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', async () => {
+      const tieneAcceso = await verificarAcceso();
+      if (tieneAcceso) {
+        await cargarUsuarios();
+      }
+    });
+  </script>
+
+  <footer class="footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>Stockyツ</h3>
+      <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Enlaces Rápidos</h4>
+      <ul>
+        <li><a href="#">Inicio</a></li>
+        <li><a href="#">Inventario</a></li>
+        <li><a href="#">Ventas</a></li>
+        <li><a href="#">Reportes</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Soporte</h4>
+      <ul>
+        <li><a href="#">Ayuda</a></li>
+        <li><a href="#">Documentación</a></li>
+        <li><a href="#">Contacto</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Contacto</h4>
+      <p>📧 info@Stocky.com</p>
+      <p>📞 +57 300 123 4567</p>
+      <p>📍 Bogotá, Colombia</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+</body>
+</html>

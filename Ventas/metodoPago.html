@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Pagos</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+      <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+
+  <main>
+    <div class="container">
+      <h1>Métodos de Pago</h1>
+
+      <!-- Panel de Control -->
+      <div class="control-panel">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar método de pago...">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add')">
+          ➕ Agregar Método de Pago
+        </button>
+      </div>
+
+      <!-- Tabla de Métodos de Pago -->
+      <div class="table-container">
+        <table id="metodosTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>NOMBRE</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- Modal para Agregar/Editar -->
+    <div id="metodoModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Agregar Método de Pago</h2>
+          <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
+        <form id="metodoForm">
+          <input type="hidden" id="metodoId">
+          <div class="form-group">
+            <label for="metodoNombre">Nombre del Método de Pago</label>
+            <input type="text" id="metodoNombre" required placeholder="Ej: Efectivo, Tarjeta de Crédito, Nequi...">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-success" id="submitBtn">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_URL = 'http://localhost/stocky/api';
+    
+    let metodosPago = [];
+    let currentEditId = null;
+
+    // Cargar métodos de pago desde la API
+    async function cargarMetodosPago() {
+        try {
+            const response = await fetch(`${API_URL}/metodos-pago.php`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                metodosPago = result.data;
+                renderTable();
+            } else {
+                mostrarError('Error al cargar métodos de pago: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar métodos de pago');
+        }
+    }
+
+    // Renderizar tabla
+    function renderTable(filteredMetodos = metodosPago) {
+      const tbody = document.getElementById('tableBody');
+
+      if (filteredMetodos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="3" class="empty-state">
+              <div>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                </svg>
+                <p>No se encontraron métodos de pago</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filteredMetodos.map(metodo => `
+        <tr>
+          <td>${metodo.id}</td>
+          <td>${metodo.nombre}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon btn-warning" onclick="editMetodo(${metodo.id})" title="Editar">✏️</button>
+              <button class="btn-icon btn-danger" onclick="deleteMetodo(${metodo.id})" title="Eliminar">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Buscar métodos de pago
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = metodosPago.filter(metodo =>
+        metodo.nombre.toLowerCase().includes(searchTerm) ||
+        metodo.id.toString().includes(searchTerm)
+      );
+      renderTable(filtered);
+    });
+
+    // Abrir modal
+    function openModal(mode, metodoId = null) {
+      const modal = document.getElementById('metodoModal');
+      const form = document.getElementById('metodoForm');
+      const title = document.getElementById('modalTitle');
+
+      form.reset();
+      currentEditId = null;
+
+      if (mode === 'edit' && metodoId) {
+        const metodo = metodosPago.find(m => m.id === metodoId);
+        if (metodo) {
+          title.textContent = 'Editar Método de Pago';
+          document.getElementById('metodoId').value = metodo.id;
+          document.getElementById('metodoNombre').value = metodo.nombre;
+          currentEditId = metodoId;
+        }
+      } else {
+        title.textContent = 'Agregar Método de Pago';
+      }
+
+      modal.classList.add('active');
+    }
+
+    // Cerrar modal
+    function closeModal() {
+      document.getElementById('metodoModal').classList.remove('active');
+    }
+
+    // Guardar método de pago
+    document.getElementById('metodoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nombre = document.getElementById('metodoNombre').value.trim();
+
+      if (currentEditId) {
+        // Actualizar
+        try {
+            const response = await fetch(`${API_URL}/metodos-pago.php`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    id: currentEditId,
+                    nombre: nombre
+                })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                mostrarExito('✅ Método de pago actualizado exitosamente');
+                await cargarMetodosPago();
+                closeModal();
+            } else {
+                mostrarError('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('❌ Error al actualizar método de pago');
+        }
+      } else {
+        // Agregar
+        try {
+            const response = await fetch(`${API_URL}/metodos-pago.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    nombre: nombre
+                })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                mostrarExito('✅ Método de pago agregado exitosamente');
+                await cargarMetodosPago();
+                closeModal();
+            } else {
+                mostrarError('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('❌ Error al agregar método de pago');
+        }
+      }
+    });
+
+    // Editar método de pago
+    function editMetodo(id) {
+      openModal('edit', id);
+    }
+
+    // Eliminar método de pago
+    async function deleteMetodo(id) {
+      const metodo = metodosPago.find(m => m.id === id);
+      if (!confirm(`¿Estás seguro de eliminar el método de pago "${metodo.nombre}"?`)) {
+        return;
+      }
+
+      try {
+          const response = await fetch(`${API_URL}/metodos-pago.php`, {
+              method: 'DELETE',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                  id: id
+              })
+          });
+          const result = await response.json();
+
+          if (result.success) {
+              mostrarExito('✅ Método de pago eliminado exitosamente');
+              await cargarMetodosPago();
+          } else {
+              mostrarError('❌ ' + result.message);
+          }
+      } catch (error) {
+          console.error('Error:', error);
+          mostrarError('❌ Error al eliminar método de pago');
+      }
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('metodoModal').addEventListener('click', (e) => {
+      if (e.target.id === 'metodoModal') {
+        closeModal();
+      }
+    });
+
+    // Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('¿Estás seguro de cerrar sesión?')) {
+            try {
+                await fetch(`${API_URL}/logout.php`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                // Continuar aunque falle
+            }
+            window.location.href = '../index.html';
+        }
+    });
+
+    // Funciones auxiliares
+    function mostrarExito(mensaje) {
+        alert(mensaje);
+    }
+
+    function mostrarError(mensaje) {
+        alert(mensaje);
+    }
+
+    // Inicializar
+    cargarMetodosPago();
+  </script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Stockyツ</h3>
+        <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+      </div>
+
+      <div class="footer-section">
+        <h4>Enlaces Rápidos</h4>
+        <ul>
+          <li><a href="#">Inicio</a></li>
+          <li><a href="#">Inventario</a></li>
+          <li><a href="#">Ventas</a></li>
+          <li><a href="#">Reportes</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Soporte</h4>
+        <ul>
+          <li><a href="#">Ayuda</a></li>
+          <li><a href="#">Documentación</a></li>
+          <li><a href="#">Contacto</a></li>
+          <li><a href="#">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Contacto</h4>
+        <p>📧 info@Stocky.com</p>
+        <p>📞 +57 300 123 4567</p>
+        <p>📍 Bogotá, Colombia</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+</body>
+
+</html>

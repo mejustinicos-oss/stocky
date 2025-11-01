@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Clientes</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+    <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main>
+
+    <div class="container">
+      <h1>Gestión de Clientes</h1>
+
+      <!-- Estadísticas -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-value" id="totalClientes">0</div>
+          <div class="stat-label">Total Clientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="clientesActivos">0</div>
+          <div class="stat-label">Clientes Activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalCompras">$0</div>
+          <div class="stat-label">Total en Compras</div>
+        </div>
+      </div>
+
+      <!-- Panel de Control -->
+      <div class="control-panel">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar por cédula, nombre, teléfono o email...">
+        </div>
+        <div class="info-badge">
+          ℹ️ Los clientes se registran automáticamente al generar una factura
+        </div>
+      </div>
+
+      <!-- Tabla de Clientes -->
+      <div class="table-container">
+        <table id="clientesTable">
+          <thead>
+            <tr>
+              <th>CÉDULA</th>
+              <th>NOMBRE</th>
+              <th>TELÉFONO</th>
+              <th>EMAIL</th>
+              <th>DIRECCIÓN</th>
+              <th>COMPRAS</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+  <!-- Modal para Editar Cliente -->
+  <div id="clienteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Editar Cliente</h2>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <form id="clienteForm">
+        <div class="form-group">
+          <label for="clienteCedula">Cédula/NIT</label>
+          <input type="text" id="clienteCedula" disabled>
+        </div>
+        <div class="form-group">
+          <label for="clienteNombre">Nombre Completo *</label>
+          <input type="text" id="clienteNombre" required>
+        </div>
+        <div class="form-group">
+          <label for="clienteTelefono">Teléfono</label>
+          <input type="tel" id="clienteTelefono">
+        </div>
+        <div class="form-group">
+          <label for="clienteEmail">Email</label>
+          <input type="email" id="clienteEmail">
+        </div>
+        <div class="form-group">
+          <label for="clienteDireccion">Dirección</label>
+          <input type="text" id="clienteDireccion">
+        </div>
+
+        <!-- Historial de Compras -->
+        <div class="historial-section" id="historialSection">
+          <h4>📜 Historial de Compras</h4>
+          <div id="historialContainer"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-success">💾 Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </main>
+
+  <script>
+    // Base de datos de clientes (simulada - sincronizada con facturas)
+    const API_URL = 'http://localhost/stocky/api';
+
+let clientesDB = [];
+let currentEditId = null;
+
+// Cargar clientes desde la API
+async function cargarClientes() {
+    try {
+        const response = await fetch(`${API_URL}/clientes.php`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            clientesDB = result.data;
+            renderTable();
+            await cargarEstadisticas();
+        } else {
+            mostrarError('Error al cargar clientes: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al cargar clientes');
+    }
+}
+
+// Cargar estadísticas
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch(`${API_URL}/estadisticas-clientes.php`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            const stats = result.data;
+            document.getElementById('totalClientes').textContent = stats.totalClientes;
+            document.getElementById('clientesActivos').textContent = stats.clientesActivos;
+            document.getElementById('totalCompras').textContent = `$${Math.round(stats.totalCompras).toLocaleString('es-CO')}`;
+        } else {
+            console.error('Error al cargar estadísticas:', result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Renderizar tabla
+function renderTable(filteredClientes = clientesDB) {
+    const tbody = document.getElementById('tableBody');
+
+    if (filteredClientes.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty-state">
+              <div>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <p>No se encontraron clientes</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filteredClientes.map(cliente => `
+        <tr>
+          <td><strong>${cliente.cedula}</strong></td>
+          <td>${cliente.nombre}</td>
+          <td>${cliente.telefono || '-'}</td>
+          <td>${cliente.email || '-'}</td>
+          <td>${cliente.direccion || '-'}</td>
+          <td style="text-align: center;">
+            <span style="background-color: #e3f2fd; color: #1976d2; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">
+              ${cliente.total_compras || 0}
+            </span>
+          </td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon btn-warning" onclick="editCliente('${cliente.cedula}')" title="Editar">✏️</button>
+              <button class="btn-icon btn-danger" onclick="deleteCliente('${cliente.cedula}')" title="Eliminar">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+}
+
+// Buscar clientes
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = clientesDB.filter(cliente =>
+        cliente.cedula.toLowerCase().includes(searchTerm) ||
+        cliente.nombre.toLowerCase().includes(searchTerm) ||
+        (cliente.telefono && cliente.telefono.toLowerCase().includes(searchTerm)) ||
+        (cliente.email && cliente.email.toLowerCase().includes(searchTerm))
+    );
+    renderTable(filtered);
+});
+
+// Editar cliente
+async function editCliente(cedula) {
+    const cliente = clientesDB.find(c => c.cedula === cedula);
+    if (!cliente) return;
+
+    currentEditId = cedula;
+
+    document.getElementById('modalTitle').textContent = 'Editar Cliente';
+    document.getElementById('clienteCedula').value = cliente.cedula;
+    document.getElementById('clienteNombre').value = cliente.nombre;
+    document.getElementById('clienteTelefono').value = cliente.telefono || '';
+    document.getElementById('clienteEmail').value = cliente.email || '';
+    document.getElementById('clienteDireccion').value = cliente.direccion || '';
+
+    // Cargar historial de compras
+    try {
+        const response = await fetch(`${API_URL}/historial-compras.php?cedula=${cedula}`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+
+        const historialContainer = document.getElementById('historialContainer');
+        if (result.success) {
+            const compras = result.data;
+            if (compras.length === 0) {
+                historialContainer.innerHTML = '<p style="color: #757575; font-style: italic;">Este cliente aún no ha realizado compras</p>';
+            } else {
+                historialContainer.innerHTML = compras.map(compra => `
+                    <div class="historial-item">
+                        <div class="historial-fecha">
+                            📋 Factura #${compra.numero_factura} - ${new Date(compra.fecha).toLocaleDateString('es-CO', { 
+                                year: 'numeric', month: 'long', day: 'numeric' 
+                            })}
+                        </div>
+                        <div class="historial-monto">$${Math.round(compra.monto).toLocaleString('es-CO')}</div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            historialContainer.innerHTML = '<p style="color: #757575; font-style: italic;">Error al cargar el historial</p>';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('historialContainer').innerHTML = '<p style="color: #757575; font-style: italic;">Error al cargar el historial</p>';
+    }
+
+    document.getElementById('clienteModal').classList.add('active');
+}
+
+// Eliminar cliente
+async function deleteCliente(cedula) {
+    const cliente = clientesDB.find(c => c.cedula === cedula);
+    
+    if (!confirm(`¿Está seguro de eliminar al cliente "${cliente.nombre}"?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/clientes.php`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                cedula: cedula
+            })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            mostrarExito('✅ Cliente eliminado exitosamente');
+            await cargarClientes(); // Recargar la lista
+        } else {
+            mostrarError('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('❌ Error al eliminar cliente');
+    }
+}
+
+// Cerrar modal
+function closeModal() {
+    document.getElementById('clienteModal').classList.remove('active');
+    currentEditId = null;
+}
+
+// Guardar cambios
+document.getElementById('clienteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!currentEditId) return;
+
+    try {
+        const response = await fetch(`${API_URL}/clientes.php`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                cedula: currentEditId,
+                nombre: document.getElementById('clienteNombre').value,
+                telefono: document.getElementById('clienteTelefono').value,
+                email: document.getElementById('clienteEmail').value,
+                direccion: document.getElementById('clienteDireccion').value
+            })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            mostrarExito('✅ Cliente actualizado exitosamente');
+            await cargarClientes(); // Recargar la lista
+            closeModal();
+        } else {
+            mostrarError('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('❌ Error al actualizar cliente');
+    }
+});
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('clienteModal').addEventListener('click', (e) => {
+    if (e.target.id === 'clienteModal') {
+        closeModal();
+    }
+});
+
+// Cerrar sesión
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    if (confirm('¿Estás seguro de cerrar sesión?')) {
+        try {
+            await fetch(`${API_URL}/logout.php`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            // Continuar aunque falle
+        }
+        window.location.href = '../index.html';
+    }
+});
+
+// Funciones auxiliares
+function mostrarExito(mensaje) {
+    alert(mensaje);
+}
+
+function mostrarError(mensaje) {
+    alert(mensaje);
+}
+
+// Inicializar
+cargarClientes();;
+  </script>
+
+  <footer class="footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>Stockyツ</h3>
+      <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Enlaces Rápidos</h4>
+      <ul>
+        <li><a href="#">Inicio</a></li>
+        <li><a href="#">Inventario</a></li>
+        <li><a href="#">Ventas</a></li>
+        <li><a href="#">Reportes</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Soporte</h4>
+      <ul>
+        <li><a href="#">Ayuda</a></li>
+        <li><a href="#">Documentación</a></li>
+        <li><a href="#">Contacto</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Contacto</h4>
+      <p>📧 info@Stocky.com</p>
+      <p>📞 +57 300 123 4567</p>
+      <p>📍 Bogotá, Colombia</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+</body>
+</html>

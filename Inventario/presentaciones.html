@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Presentaciones</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+    <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main>
+    <div class="container">
+      <h1>Presentaciones</h1>
+
+      <!-- Panel de Control -->
+      <div class="control-panel">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar presentación...">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add')">
+           Agregar Presentación
+        </button>
+      </div>
+
+      <!-- Tabla de Presentaciones -->
+      <div class="table-container">
+        <table id="presentacionTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>NOMBRE</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal para Agregar/Editar -->
+    <div id="presentacionModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Agregar Presentación</h2>
+          <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
+        <form id="presentacionForm">
+          <input type="hidden" id="presentacionId">
+          <div class="form-group">
+            <label for="presentacionName">Nombre de la Presentación</label>
+            <input type="text" id="presentacionName" required placeholder="Ej: Unidad, Caja, Paquete, Litro, etc.">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-success" id="submitBtn">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+
+
+  <footer class="footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>Stockyツ</h3>
+      <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Enlaces Rápidos</h4>
+      <ul>
+        <li><a href="#">Inicio</a></li>
+        <li><a href="#">Inventario</a></li>
+        <li><a href="#">Ventas</a></li>
+        <li><a href="#">Reportes</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Soporte</h4>
+      <ul>
+        <li><a href="#">Ayuda</a></li>
+        <li><a href="#">Documentación</a></li>
+        <li><a href="#">Contacto</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Contacto</h4>
+      <p>📧 info@Stocky.com</p>
+      <p>📞 +57 300 123 4567</p>
+      <p>📍 Bogotá, Colombia</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<script>
+    const API_URL = 'http://localhost/stocky/api';
+    
+let presentaciones = [];
+let currentEditId = null;
+
+// Cargar presentaciones desde la API
+async function cargarPresentaciones() {
+    try {
+        const response = await fetch(`${API_URL}/presentaciones.php`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            presentaciones = result.data;
+            renderTable();
+        } else {
+            mostrarError('Error al cargar presentaciones: ' + result.message);
+            renderTable([]); // Mostrar tabla vacía
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al conectar con el servidor');
+        renderTable([]);
+    }
+}
+
+// Renderizar tabla
+function renderTable(filteredPresentaciones = presentaciones) {
+    const tbody = document.getElementById('tableBody');
+
+    if (filteredPresentaciones.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="empty-state">
+                    <div>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        <p>No se encontraron presentaciones</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filteredPresentaciones.map(pres => `
+        <tr>
+            <td>${pres.id}</td>
+            <td>${pres.nombre}</td>
+            <td>
+                <div class="actions">
+                    <button class="btn-icon btn-warning" onclick="editPresentacion(${pres.id})" title="Editar">✏️</button>
+                    <button class="btn-icon btn-danger" onclick="deletePresentacion(${pres.id})" title="Eliminar">🗑️</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Buscar presentaciones
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const filtered = presentaciones.filter(pres =>
+        pres.nombre.toLowerCase().includes(searchTerm) ||
+        pres.id.toString().includes(searchTerm)
+    );
+    renderTable(filtered);
+});
+
+// Abrir modal
+function openModal(mode, presentacionId = null) {
+    const modal = document.getElementById('presentacionModal');
+    const form = document.getElementById('presentacionForm');
+    const title = document.getElementById('modalTitle');
+
+    form.reset();
+    currentEditId = null;
+
+    if (mode === 'edit' && presentacionId) {
+        const presentacion = presentaciones.find(pres => pres.id === presentacionId);
+        if (presentacion) {
+            title.textContent = 'Editar Presentación';
+            document.getElementById('presentacionId').value = presentacion.id;
+            document.getElementById('presentacionName').value = presentacion.nombre;
+            currentEditId = presentacionId;
+        }
+    } else {
+        title.textContent = 'Agregar Presentación';
+    }
+
+    modal.classList.add('active');
+}
+
+// Cerrar modal
+function closeModal() {
+    document.getElementById('presentacionModal').classList.remove('active');
+}
+
+// Guardar presentación
+document.getElementById('presentacionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const nombre = document.getElementById('presentacionName').value.trim();
+
+    const data = { nombre };
+
+    try {
+        let response;
+        if (currentEditId) {
+            // Actualizar
+            data.id = currentEditId;
+            response = await fetch(`${API_URL}/presentaciones.php`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+        } else {
+            // Crear
+            response = await fetch(`${API_URL}/presentaciones.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            mostrarExito(result.message);
+            await cargarPresentaciones();
+            closeModal();
+        } else {
+            mostrarError(result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al guardar la presentación');
+    }
+});
+
+// Editar presentación
+function editPresentacion(id) {
+    openModal('edit', id);
+}
+
+// Eliminar presentación
+async function deletePresentacion(id) {
+    const presentacion = presentaciones.find(pres => pres.id === id);
+    if (!confirm(`¿Estás seguro de eliminar la presentación "${presentacion.nombre}"?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/presentaciones.php`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            mostrarExito(result.message);
+            await cargarPresentaciones();
+        } else {
+            mostrarError(result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al eliminar la presentación');
+    }
+}
+
+// Funciones auxiliares
+function mostrarExito(mensaje) {
+    alert('✅ ' + mensaje);
+}
+
+function mostrarError(mensaje) {
+    alert('❌ ' + mensaje);
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('presentacionModal').addEventListener('click', (e) => {
+    if (e.target.id === 'presentacionModal') {
+        closeModal();
+    }
+});
+
+// Cerrar sesión
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    if (!confirm('¿Estás seguro de cerrar sesión?')) return;
+    
+    try {
+        await fetch(`${API_URL}/logout.php`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        window.location.href = '../index.html';
+    } catch (error) {
+        window.location.href = '../index.html';
+    }
+});
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    cargarPresentaciones();
+});
+  </script>
+</body>
+</html>

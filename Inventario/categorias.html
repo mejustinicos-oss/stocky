@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Categorias</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+    <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main>
+    <div class="container">
+      <h1>Categorias</h1>
+
+      <!-- Panel de Control -->
+      <div class="control-panel">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar categoria...">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add')">
+           Agregar Categoria
+        </button>
+      </div>
+
+      <!-- Tabla de Categorias -->
+      <div class="table-container">
+        <table id="categoryTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>NOMBRE</th>
+              <th>DESCRIPCION</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal para Agregar/Editar -->
+    <div id="categoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Agregar Categoria</h2>
+          <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
+        <form id="categoryForm">
+          <input type="hidden" id="categoryId">
+          <div class="form-group">
+            <label for="categoryName">Nombre de la Categoria</label>
+            <input type="text" id="categoryName" required>
+          </div>
+          <div class="form-group">
+            <label for="categoryDescription">Descripcion</label>
+            <input type="text" id="categoryDescription" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+            <button type="submit" class="btn btn-success" id="submitBtn">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+
+  <footer class="footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>Stockyツ</h3>
+      <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Enlaces Rápidos</h4>
+      <ul>
+        <li><a href="#">Inicio</a></li>
+        <li><a href="#">Inventario</a></li>
+        <li><a href="#">Ventas</a></li>
+        <li><a href="#">Reportes</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Soporte</h4>
+      <ul>
+        <li><a href="#">Ayuda</a></li>
+        <li><a href="#">Documentación</a></li>
+        <li><a href="#">Contacto</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Contacto</h4>
+      <p>📧 info@Stocky.com</p>
+      <p>📞 +57 300 123 4567</p>
+      <p>📍 Bogotá, Colombia</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<script>
+     const API_URL = 'http://localhost/stocky/api';
+    
+    let categorias = [];
+    let currentEditId = null;
+
+    // Cargar categorías desde la API
+    async function cargarCategorias() {
+      try {
+        const response = await fetch(`${API_URL}/categorias.php`, {
+          credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          categorias = result.data;
+          renderTable();
+        } else {
+          mostrarError('Error al cargar categorías: ' + result.message);
+          renderTable([]); // Mostrar tabla vacía
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al conectar con el servidor');
+        renderTable([]);
+      }
+    }
+
+    // Renderizar tabla
+    function renderTable(filteredCategorias = categorias) {
+      const tbody = document.getElementById('tableBody');
+
+      if (filteredCategorias.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="empty-state">
+              <div>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 80px; height: 80px; margin-bottom: 1rem; opacity: 0.3;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+                <p>No se encontraron categorias</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filteredCategorias.map(cat => `
+        <tr>
+          <td>${cat.id}</td>
+          <td>${cat.nombre}</td>
+          <td>${cat.descripcion || '-'}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon btn-warning" onclick="editCategory(${cat.id})" title="Editar">✏️</button>
+              <button class="btn-icon btn-danger" onclick="deleteCategory(${cat.id})" title="Eliminar">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Buscar categorías
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = categorias.filter(cat =>
+        cat.nombre.toLowerCase().includes(searchTerm) ||
+        (cat.descripcion && cat.descripcion.toLowerCase().includes(searchTerm)) ||
+        cat.id.toString().includes(searchTerm)
+      );
+      renderTable(filtered);
+    });
+
+    // Abrir modal
+    function openModal(mode, categoryId = null) {
+      const modal = document.getElementById('categoryModal');
+      const form = document.getElementById('categoryForm');
+      const title = document.getElementById('modalTitle');
+
+      form.reset();
+      currentEditId = null;
+
+      if (mode === 'edit' && categoryId) {
+        const categoria = categorias.find(cat => cat.id === categoryId);
+        if (categoria) {
+          title.textContent = 'Editar Categoria';
+          document.getElementById('categoryId').value = categoria.id;
+          document.getElementById('categoryName').value = categoria.nombre;
+          document.getElementById('categoryDescription').value = categoria.descripcion || '';
+          currentEditId = categoryId;
+        }
+      } else {
+        title.textContent = 'Agregar Categoria';
+      }
+
+      modal.classList.add('active');
+    }
+
+    // Cerrar modal
+    function closeModal() {
+      document.getElementById('categoryModal').classList.remove('active');
+    }
+
+    // Guardar categoría
+    document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nombre = document.getElementById('categoryName').value.trim();
+      const descripcion = document.getElementById('categoryDescription').value.trim();
+
+      const data = { nombre, descripcion };
+
+      try {
+        let response;
+        if (currentEditId) {
+          // Actualizar
+          data.id = currentEditId;
+          response = await fetch(`${API_URL}/categorias.php`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data)
+          });
+        } else {
+          // Crear
+          response = await fetch(`${API_URL}/categorias.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data)
+          });
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          mostrarExito(result.message);
+          await cargarCategorias();
+          closeModal();
+        } else {
+          mostrarError(result.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al guardar la categoría');
+      }
+    });
+
+    // Editar categoría
+    function editCategory(id) {
+      openModal('edit', id);
+    }
+
+    // Eliminar categoría
+    async function deleteCategory(id) {
+      const categoria = categorias.find(cat => cat.id === id);
+      if (!confirm(`¿Estás seguro de eliminar la categoria "${categoria.nombre}"?`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/categorias.php`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          mostrarExito(result.message);
+          await cargarCategorias();
+        } else {
+          mostrarError(result.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al eliminar la categoría');
+      }
+    }
+
+    // Funciones auxiliares
+    function mostrarExito(mensaje) {
+      alert('✅ ' + mensaje);
+    }
+
+    function mostrarError(mensaje) {
+      alert('❌ ' + mensaje);
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('categoryModal').addEventListener('click', (e) => {
+      if (e.target.id === 'categoryModal') {
+        closeModal();
+      }
+    });
+
+    // Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (!confirm('¿Estás seguro de cerrar sesión?')) return;
+      
+      try {
+        await fetch(`${API_URL}/logout.php`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '../index.html';
+      } catch (error) {
+        window.location.href = '../index.html';
+      }
+    });
+
+    // Inicializar al cargar
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarCategorias();
+    });
+  </script>
+</body>
+</html>

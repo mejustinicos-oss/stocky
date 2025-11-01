@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stockyツ - Dashboard</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+    <!-- Barra superior -->
+    <header class="navbar">
+        <a class="home-logo" href="dashboard.html">
+            <div class="logo">Stockyツ</div>
+        </a>
+        <nav class="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="#">Inventario ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="Inventario/productos.html">Productos</a></li>
+                        <li><a href="Inventario/categorias.html">Categorías</a></li>
+                        <li><a href="Inventario/presentaciones.html">Presentaciones</a></li>
+                        <li><a href="Inventario/proveedores.html">Proveedores</a></li>
+                    </ul>
+                </li>
+
+                <li class="dropdown">
+                    <a href="#">Ventas ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="Ventas/facturas.html">Facturas</a></li>
+                        <li><a href="Ventas/registrarVenta.html">Generar Factura</a></li>
+                        <li><a href="Ventas/metodoPago.html">Métodos de Pago</a></li>
+                    </ul>
+                </li>
+
+                <li class="dropdown">
+                    <a href="#">Administración ▾</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="Administracion/vendedores.html">Usuarios</a></li>
+                        <li><a href="Administracion/clientes.html">Clientes</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <button id="logoutBtn">Cerrar Sesión</button>
+    </header>
+
+    <!-- Contenido principal -->
+    <main>
+        <div class="container">
+            <!-- Bienvenida -->
+            <div class="welcome-section">
+                <h1>¡Bienvenido al Dashboard!</h1>
+                <p>Aquí puedes ver el resumen de tu negocio en tiempo real</p>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-grid">
+                <!-- Ventas del día -->
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-label">Ventas de Hoy</div>
+                    <div class="stat-value currency" id="ventasHoy">0</div>
+                    <div class="stat-detail">
+                        <span class="trend-up">12%</span> vs ayer
+                    </div>
+                </div>
+
+                <!-- Ventas del mes -->
+                <div class="stat-card green">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-label">Ventas del Mes</div>
+                    <div class="stat-value currency" id="ventasMes">0</div>
+                    <div class="stat-detail">
+                        <span class="trend-up">8%</span> vs mes anterior
+                    </div>
+                </div>
+
+                <!-- Producto más vendido -->
+                <div class="stat-card orange">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-label">Producto Más Vendido</div>
+                    <div class="stat-value" id="productoMasVendido" style="font-size: 1.5rem;">Cargando...</div>
+                    
+                </div>
+
+                <!-- Total productos -->
+                <div class="stat-card purple">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-label">Productos en Stock</div>
+                    <div class="stat-value" id="totalProductos">0</div>
+                    
+                </div>
+
+                <!-- Clientes totales -->
+                <div class="stat-card red">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-label">Clientes Registrados</div>
+                    <div class="stat-value" id="totalClientes">0</div>
+                    
+                </div>
+
+                <!-- Pedidos pendientes -->
+                <div class="stat-card" style="border-left: 4px solid #ff6b6b;">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-label">Productos con Stock Bajo</div>
+                    <div class="stat-value" id="pedidosPendientes">0</div>
+                    
+                </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            <div class="quick-actions">
+                <h2>⚡ Acciones Rápidas</h2>
+                <div class="actions-grid">
+                    <a href="Ventas/registrarVenta.html" class="action-btn">
+                        <span class="action-btn-icon">🛒</span>
+                        <span class="action-btn-text">Nueva Venta</span>
+                    </a>
+                    <a href="Inventario/productos.html" class="action-btn">
+                        <span class="action-btn-icon">➕</span>
+                        <span class="action-btn-text">Agregar Producto</span>
+                    </a>
+                    <a href="Ventas/facturas.html" class="action-btn">
+                        <span class="action-btn-icon">📄</span>
+                        <span class="action-btn-text">Ver Facturas</span>
+                    </a>
+                    <a href="Administracion/clientes.html" class="action-btn">
+                        <span class="action-btn-icon">👤</span>
+                        <span class="action-btn-text">Gestionar Clientes</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Stockyツ</h3>
+                <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Enlaces Rápidos</h4>
+                <ul>
+                    <li><a href="#">Inicio</a></li>
+                    <li><a href="#">Inventario</a></li>
+                    <li><a href="#">Ventas</a></li>
+                    <li><a href="#">Reportes</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>Soporte</h4>
+                <ul>
+                    <li><a href="#">Ayuda</a></li>
+                    <li><a href="#">Documentación</a></li>
+                    <li><a href="#">Contacto</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>Contacto</h4>
+                <p>📧 info@Stocky.com</p>
+                <p>📞 +57 300 123 4567</p>
+                <p>📍 Bogotá, Colombia</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost/stocky/api';
+
+        // Función para animar números
+        function animateValue(elementId, start, end, duration, isCurrency = false) {
+            const element = document.getElementById(elementId);
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    current = end;
+                    clearInterval(timer);
+                }
+
+                if (isCurrency) {
+                    element.textContent = formatCurrency(Math.floor(current));
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString('es-CO');
+                }
+            }, 16);
+        }
+
+        // Función para formatear moneda
+        function formatCurrency(amount) {
+            return '$ ' + amount.toLocaleString('es-CO');
+        }
+
+        // Función para animar texto
+        function animateText(elementId, text, duration) {
+            const element = document.getElementById(elementId);
+            let index = 0;
+            const speed = duration / text.length;
+
+            element.textContent = '';
+
+            const timer = setInterval(() => {
+                if (index < text.length) {
+                    element.textContent += text.charAt(index);
+                    index++;
+                } else {
+                    clearInterval(timer);
+                }
+            }, speed);
+        }
+
+        // Función para cargar estadísticas reales
+        async function cargarEstadisticasReales() {
+            try {
+                console.log('📊 Cargando estadísticas reales...');
+                const response = await fetch(`${API_URL}/estadisticas-dashboard.php`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Estadísticas recibidas:', result);
+
+                if (result.success) {
+                    return result.data;
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('❌ Error cargando estadísticas:', error);
+                // Devolver datos por defecto en caso de error
+                return {
+                    ventasHoy: 0,
+                    ventasMes: 0,
+                    productoMasVendido: 'No hay datos',
+                    ventasProducto: 0,
+                    totalProductos: 0,
+                    totalClientes: 0,
+                    productosBajoStock: 0,
+                    tendencias: { hoy: 0, mes: 0 }
+                };
+            }
+        }
+
+        // Función para actualizar tendencias en la UI
+        function actualizarTendencias(tendencias) {
+            // Actualizar tendencia de ventas hoy
+            const trendHoy = document.querySelector('#ventasHoy').closest('.stat-card').querySelector('.trend-up, .trend-down');
+            if (trendHoy) {
+                trendHoy.textContent = ` ${Math.abs(tendencias.hoy)}%`;
+                trendHoy.className = tendencias.hoy >= 0 ? 'trend-up' : 'trend-down';
+            }
+
+            // Actualizar tendencia de ventas mes
+            const trendMes = document.querySelector('#ventasMes').closest('.stat-card').querySelector('.trend-up, .trend-down');
+            if (trendMes) {
+                trendMes.textContent = ` ${Math.abs(tendencias.mes)}%`;
+                trendMes.className = tendencias.mes >= 0 ? 'trend-up' : 'trend-down';
+            }
+        }
+
+        // Función para iniciar animaciones con datos reales
+        async function iniciarAnimacionesReales() {
+            const estadisticas = await cargarEstadisticasReales();
+
+            console.log('🎬 Iniciando animaciones con datos reales:', estadisticas);
+
+            // Actualizar tendencias
+            actualizarTendencias(estadisticas.tendencias);
+
+            // Animar ventas del día
+            setTimeout(() => {
+                animateValue('ventasHoy', 0, estadisticas.ventasHoy, 1500, true);
+            }, 200);
+
+            // Animar ventas del mes
+            setTimeout(() => {
+                animateValue('ventasMes', 0, estadisticas.ventasMes, 1800, true);
+            }, 400);
+
+            // Animar producto más vendido
+            setTimeout(() => {
+                animateText('productoMasVendido', estadisticas.productoMasVendido, 800);
+                animateValue('ventasProducto', 0, estadisticas.ventasProducto, 1200, false);
+            }, 600);
+
+            // Animar total productos
+            setTimeout(() => {
+                animateValue('totalProductos', 0, estadisticas.totalProductos, 1500, false);
+            }, 800);
+
+            // Animar total clientes
+            setTimeout(() => {
+                animateValue('totalClientes', 0, estadisticas.totalClientes, 1600, false);
+            }, 1000);
+
+            // Animar productos con stock bajo (reemplaza "pedidos pendientes")
+            setTimeout(() => {
+                animateValue('pedidosPendientes', 0, estadisticas.productosBajoStock, 1000, false);
+
+                // Actualizar el texto del detalle
+                const detalle = document.querySelector('#pedidosPendientes').closest('.stat-card').querySelector('.stat-detail span');
+                if (detalle) {
+                    detalle.textContent = estadisticas.productosBajoStock;
+                }
+            }, 1200);
+        }
+
+        // Función para cerrar sesión
+        async function cerrarSesion() {
+            if (!confirm('¿Está seguro de cerrar sesión?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/logout.php`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // EVENT LISTENER PRINCIPAL
+        window.addEventListener('load', async () => {
+            console.log('🔍 Verificando sesión...');
+
+            try {
+                const response = await fetch(`${API_URL}/verificar-sesion.php`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Respuesta sesión:', result);
+
+                if (!result.success) {
+                    console.log('❌ No hay sesión, redirigiendo...');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // ✅ SESIÓN VÁLIDA - Cargar dashboard con datos reales
+                console.log('✅ Sesión válida, cargando estadísticas reales...');
+
+                const user = result.data.user;
+                // Si tienes un elemento para mostrar el nombre del usuario:
+                // document.getElementById('userName').textContent = user.nombre;
+
+                // Iniciar animaciones con datos reales
+                await iniciarAnimacionesReales();
+
+            } catch (error) {
+                console.error('❌ Error verificando sesión:', error);
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Asignar evento de cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', cerrarSesion);
+    </script>
+</body>
+
+</html>

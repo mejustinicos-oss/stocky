@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Ventas</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+      <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main>
+    <div class="container">
+      <h1>Generar Nueva Factura</h1>
+
+      <div class="form-section">
+        <!-- Información del Cliente -->
+        <h3 class="section-title">👤 Información del Cliente</h3>
+        <div id="clienteEncontrado"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clienteId">Cédula/NIT *</label>
+            <input type="text" id="clienteId" required placeholder="123456789">
+          </div>
+          <div class="form-group">
+            <label for="clienteNombre">Nombre Completo *</label>
+            <input type="text" id="clienteNombre" required placeholder="Juan Pérez">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clienteTelefono">Teléfono</label>
+            <input type="tel" id="clienteTelefono" placeholder="300-123-4567">
+          </div>
+          <div class="form-group">
+            <label for="clienteEmail">Email</label>
+            <input type="email" id="clienteEmail" placeholder="cliente@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="clienteDireccion">Dirección</label>
+          <input type="text" id="clienteDireccion" placeholder="Calle 123 #45-67">
+        </div>
+
+        <!-- Método de Pago -->
+        <h3 class="section-title" style="margin-top: 2rem;">Método de Pago</h3>
+        <div class="form-group">
+          <label for="metodoPago">Seleccionar método de pago *</label>
+          <select id="metodoPago" required>
+        <option value="">Cargando métodos de pago...</option>
+    </select>
+        </div>
+
+        <!-- Productos -->
+        <h3 class="section-title" style="margin-top: 2rem;">Agregar Productos</h3>
+        <div id="categoriasContainer"></div>
+
+        <!-- Carrito -->
+        <div class="carrito-section">
+          <h3 class="section-title">🛒 Carrito de Compras</h3>
+          <div id="carritoContainer">
+            <div class="empty-cart">
+              <div class="empty-cart-icon">🛒</div>
+              <p style="font-size: 1.1rem; font-weight: 600;">No hay productos agregados</p>
+              <p style="font-size: 0.9rem; margin-top: 0.5rem;">Selecciona productos y sus cantidades arriba</p>
+            </div>
+          </div>
+          <div id="totalesContainer"></div>
+        </div>
+
+        <button class="btn btn-success" onclick="generarFactura()">
+          📄 Generar Factura y Descargar PDF
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const API_URL = 'http://localhost/stocky/api';
+
+    let productosPorCategoria = {};
+    let carrito = [];
+    let vendedor = {};
+    let clientesDB = [];
+
+    // Cargar datos iniciales
+    async function cargarDatosIniciales() {
+      try {
+        // Cargar información del vendedor
+        const responseSesion = await fetch(`${API_URL}/verificar-sesion.php`, {
+          credentials: 'include'
+        });
+        const resultSesion = await responseSesion.json();
+
+        if (resultSesion.success) {
+          vendedor = {
+            nombre: resultSesion.data.user.nombre,
+            documento: resultSesion.data.user.cedula,
+            telefono: "No disponible",
+            email: resultSesion.data.user.email,
+            rol: resultSesion.data.user.rol
+          };
+        }
+
+        // Cargar productos
+        await cargarProductos();
+
+        // Cargar métodos de pago
+        await cargarMetodosPago();
+        
+
+        console.log('✅ Datos iniciales cargados correctamente');
+      } catch (error) {
+        console.error('Error cargando datos iniciales:', error);
+        mostrarError('Error al cargar datos iniciales');
+      }
+
+      
+
+      // Llamar a esta función en cargarDatosIniciales
+      async function cargarDatosIniciales() {
+        try {
+          // ... código existente ...
+          await cargarMetodosPago(); // Añadir esta línea
+          console.log('✅ Datos iniciales cargados correctamente');
+        } catch (error) {
+          console.error('Error cargando datos iniciales:', error);
+          mostrarError('Error al cargar datos iniciales');
+        }
+      }
+    }
+
+    // Cargar productos desde la API
+    async function cargarProductos() {
+      try {
+        const response = await fetch(`${API_URL}/productos-venta.php`, {
+          credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          productosPorCategoria = result.data;
+          renderCategorias();
+        } else {
+          mostrarError('Error al cargar productos: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('Error al cargar productos');
+      }
+    }
+
+    async function cargarMetodosPago() {
+    try {
+        const response = await fetch(`${API_URL}/metodos-pago.php`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            const select = document.getElementById('metodoPago');
+            select.innerHTML = '<option value="">Seleccione...</option>';
+            
+            result.data.forEach(metodo => {
+                const option = document.createElement('option');
+                option.value = metodo.nombre;
+                option.textContent = metodo.nombre;
+                select.appendChild(option);
+            });
+            
+            console.log('✅ Métodos de pago cargados correctamente');
+        } else {
+            console.error('Error al cargar métodos de pago:', result.message);
+            // Fallback a métodos por defecto si hay error
+            cargarMetodosPagoFallback();
+        }
+    } catch (error) {
+        console.error('Error cargando métodos de pago:', error);
+        // Fallback a métodos por defecto si hay error
+        cargarMetodosPagoFallback();
+    }
+}
+
+// Fallback en caso de error
+function cargarMetodosPagoFallback() {
+    const metodosFallback = [
+        'Efectivo',
+        'Tarjeta de Crédito', 
+        'Tarjeta de Débito',
+        'Transferencia Bancaria',
+        'Nequi',
+        'Daviplata'
+    ];
+    
+    const select = document.getElementById('metodoPago');
+    select.innerHTML = '<option value="">Seleccione...</option>';
+    
+    metodosFallback.forEach(metodo => {
+        const option = document.createElement('option');
+        option.value = metodo;
+        option.textContent = metodo;
+        select.appendChild(option);
+    });
+}
+
+    // Renderizar categorías
+    function renderCategorias() {
+      const container = document.getElementById('categoriasContainer');
+      container.innerHTML = '';
+
+      Object.keys(productosPorCategoria).forEach(categoria => {
+        const categoriaDiv = document.createElement('div');
+        categoriaDiv.className = 'categoria-group';
+
+        categoriaDiv.innerHTML = `
+                <div class="categoria-header" onclick="toggleCategoria(this)">
+                    <span>📦 ${categoria}</span>
+                    <span>▼</span>
+                </div>
+                <div class="productos-lista">
+                    ${productosPorCategoria[categoria].map(prod => `
+                        <div class="producto-item">
+                            <span style="font-weight: 500;">${prod.nombre}</span>
+                            <span style="color: #2e7d32; font-weight: 600;">$${prod.precio.toLocaleString('es-CO')}</span>
+                            <span style="color: #666; font-size: 0.9rem;">Stock: ${prod.cantidad_stock}</span>
+                            <input type="number" min="0" max="${prod.cantidad_stock}" value="0" 
+                                   id="cant-${prod.id}" 
+                                   onchange="actualizarCarrito('${prod.id}', this.value, '${prod.nombre}', ${prod.precio})"
+                                   placeholder="Cantidad">
+                            <button class="btn btn-primary" onclick="agregarRapido('${prod.id}', '${prod.nombre}', ${prod.precio})">
+                                ➕ Agregar
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+        container.appendChild(categoriaDiv);
+      });
+    }
+
+    function toggleCategoria(element) {
+      const lista = element.nextElementSibling;
+      const arrow = element.querySelector('span:last-child');
+      if (lista.style.display === 'none') {
+        lista.style.display = 'block';
+        arrow.textContent = '▼';
+      } else {
+        lista.style.display = 'none';
+        arrow.textContent = '▶';
+      }
+    }
+
+    function agregarRapido(id, nombre, precio) {
+      const input = document.getElementById(`cant-${id}`);
+      const maxStock = parseInt(input.max);
+      const nuevaCantidad = parseInt(input.value) + 1;
+
+      if (nuevaCantidad > maxStock) {
+        mostrarError(`No hay suficiente stock. Stock disponible: ${maxStock}`);
+        return;
+      }
+
+      input.value = nuevaCantidad;
+      actualizarCarrito(id, nuevaCantidad, nombre, precio);
+    }
+
+    function actualizarCarrito(id, cantidad, nombre, precio) {
+      cantidad = parseInt(cantidad);
+      const maxStock = parseInt(document.getElementById(`cant-${id}`).max);
+
+      if (cantidad > maxStock) {
+        mostrarError(`No hay suficiente stock. Stock disponible: ${maxStock}`);
+        document.getElementById(`cant-${id}`).value = maxStock;
+        cantidad = maxStock;
+      }
+
+      const index = carrito.findIndex(item => item.id === id);
+
+      if (cantidad > 0) {
+        if (index !== -1) {
+          carrito[index].cantidad = cantidad;
+        } else {
+          carrito.push({ id, nombre, precio, cantidad });
+        }
+      } else {
+        if (index !== -1) {
+          carrito.splice(index, 1);
+        }
+      }
+
+      renderCarrito();
+    }
+
+    function renderCarrito() {
+      const container = document.getElementById('carritoContainer');
+      const totalesContainer = document.getElementById('totalesContainer');
+
+      if (carrito.length === 0) {
+        container.innerHTML = `
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <p style="font-size: 1.1rem; font-weight: 600;">No hay productos agregados</p>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">Selecciona productos y sus cantidades arriba</p>
+                </div>
+            `;
+        totalesContainer.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = carrito.map(item => `
+            <div class="carrito-item">
+                <div class="carrito-item-info">
+                    <div class="carrito-item-nombre">${item.nombre}</div>
+                    <div class="carrito-item-detalle">${item.cantidad} unidad${item.cantidad > 1 ? 'es' : ''} × $${item.precio.toLocaleString('es-CO')}</div>
+                </div>
+                <div class="carrito-item-precio">$${(item.precio * item.cantidad).toLocaleString('es-CO')}</div>
+                <button class="btn btn-danger" onclick="eliminarDelCarrito('${item.id}')">🗑️</button>
+            </div>
+        `).join('');
+
+      const subtotal = calcularSubtotal();
+      const iva = subtotal * 0.19;
+      const total = subtotal + iva;
+
+      totalesContainer.innerHTML = `
+            <div class="totales">
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>$${Math.round(subtotal).toLocaleString('es-CO')}</span>
+                </div>
+                <div class="total-row">
+                    <span>IVA (19%):</span>
+                    <span>$${Math.round(iva).toLocaleString('es-CO')}</span>
+                </div>
+                <div class="total-row final">
+                    <span>TOTAL:</span>
+                    <span>$${Math.round(total).toLocaleString('es-CO')}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function eliminarDelCarrito(id) {
+      const input = document.getElementById(`cant-${id}`);
+      if (input) input.value = 0;
+      carrito = carrito.filter(item => item.id !== id);
+      renderCarrito();
+    }
+
+    function calcularSubtotal() {
+      return carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    }
+
+    // Buscar cliente
+    document.getElementById('clienteId').addEventListener('blur', async function () {
+      const id = this.value.trim();
+      if (!id) return;
+
+      try {
+        const response = await fetch(`${API_URL}/clientes-venta.php?cedula=${id}`, {
+          credentials: 'include'
+        });
+        const result = await response.json();
+
+        const container = document.getElementById('clienteEncontrado');
+
+        if (result.success) {
+          const cliente = result.data;
+          document.getElementById('clienteNombre').value = cliente.nombre;
+          document.getElementById('clienteTelefono').value = cliente.telefono || '';
+          document.getElementById('clienteEmail').value = cliente.email || '';
+          document.getElementById('clienteDireccion').value = cliente.direccion || '';
+
+          container.innerHTML = `
+                    <div class="cliente-encontrado">
+                        <span style="font-size: 1.5rem;">✅</span>
+                        <span><strong>Cliente encontrado:</strong> ${cliente.nombre}</span>
+                    </div>
+                `;
+
+          setTimeout(() => {
+            container.innerHTML = '';
+          }, 3000);
+        } else {
+          // Cliente no existe, limpiar campos excepto cédula
+          document.getElementById('clienteNombre').value = '';
+          document.getElementById('clienteTelefono').value = '';
+          document.getElementById('clienteEmail').value = '';
+          document.getElementById('clienteDireccion').value = '';
+
+          container.innerHTML = `
+                    <div class="cliente-no-encontrado">
+                        <span style="font-size: 1.5rem;">ℹ️</span>
+                        <span>Cliente no encontrado. Complete los datos para registrar uno nuevo.</span>
+                    </div>
+                `;
+        }
+      } catch (error) {
+        console.error('Error buscando cliente:', error);
+      }
+    });
+
+    // Generar factura
+    async function generarFactura() {
+      // Validaciones
+      if (!document.getElementById('clienteId').value || !document.getElementById('clienteNombre').value) {
+        mostrarError('⚠️ Por favor complete la información del cliente');
+        return;
+      }
+
+      if (!document.getElementById('metodoPago').value) {
+        mostrarError('⚠️ Por favor seleccione un método de pago');
+        return;
+      }
+
+      if (carrito.length === 0) {
+        mostrarError('⚠️ Por favor agregue al menos un producto');
+        return;
+      }
+
+      const cliente = {
+        id: document.getElementById('clienteId').value.trim(),
+        nombre: document.getElementById('clienteNombre').value.trim(),
+        telefono: document.getElementById('clienteTelefono').value.trim(),
+        email: document.getElementById('clienteEmail').value.trim(),
+        direccion: document.getElementById('clienteDireccion').value.trim()
+      };
+
+      const metodo_pago = document.getElementById('metodoPago').value;
+      const subtotal = calcularSubtotal();
+      const iva = subtotal * 0.19;
+      const total = subtotal + iva;
+
+      // Preparar datos para enviar
+      const facturaData = {
+        cliente: cliente,
+        metodo_pago: metodo_pago,
+        productos: carrito,
+        subtotal: subtotal,
+        iva: iva,
+        total: total
+      };
+
+      try {
+        // Guardar factura en la base de datos
+        const response = await fetch(`${API_URL}/guardar-factura.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(facturaData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          const factura = result.data;
+
+          // Generar PDF
+          await generarPDF(factura);
+
+          mostrarExito(`✅ ¡Factura generada exitosamente!\n\nFactura No. ${factura.numero_factura}\nCliente: ${factura.cliente.nombre}\nTotal: $${Math.round(factura.total).toLocaleString('es-CO')}\n\nEl PDF ha sido descargado.`);
+
+          // Preguntar si desea generar otra factura
+          if (confirm('¿Desea generar otra factura?')) {
+            resetFormulario();
+          }
+        } else {
+          mostrarError('❌ Error al guardar factura: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarError('❌ Error al guardar la factura');
+      }
+    }
+
+    // Generar PDF
+    async function generarPDF(factura) {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        let y = 20;
+        const margen = 20;
+        const anchoUtil = 170;
+
+        // Encabezado
+        doc.setFontSize(22);
+        doc.setTextColor(61, 82, 160);
+        doc.text('Stocky', margen, y);
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('NIT: 900.123.456-7', margen, y + 7);
+        doc.text('Calle 72 #10-34, Ibagué, Colombia', margen, y + 11);
+        doc.text('Tel: +57 (314) 234-5678', margen, y + 15);
+        doc.text('Email: info@stocky.com', margen, y + 19);
+
+        // Número de factura
+        doc.setFontSize(18);
+        doc.setTextColor(61, 82, 160);
+        doc.text('FACTURA DE VENTA', 140, y);
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`No. ${factura.numero_factura}`, 140, y + 8);
+        doc.setFontSize(9);
+        doc.text(`Fecha: ${new Date(factura.fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}`, 140, y + 13);
+        doc.text(`Hora: ${new Date(factura.fecha).toLocaleTimeString('es-CO')}`, 140, y + 17);
+
+        // Línea
+        y += 27;
+        doc.setDrawColor(61, 82, 160);
+        doc.setLineWidth(0.8);
+        doc.line(margen, y, margen + anchoUtil, y);
+
+        // Información del vendedor y cliente
+        y += 8;
+        doc.setFillColor(245, 247, 250);
+        doc.rect(margen, y, 80, 28, 'F');
+        doc.rect(margen + 90, y, 80, 28, 'F');
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(61, 82, 160);
+        doc.text('VENDEDOR', margen + 3, y + 5);
+        doc.text('CLIENTE', margen + 93, y + 5);
+
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.text(vendedor.nombre, margen + 3, y + 10);
+        doc.text(`CC: ${vendedor.documento}`, margen + 3, y + 14);
+        doc.text(`Rol: ${vendedor.rol}`, margen + 3, y + 18);
+        doc.text(vendedor.email, margen + 3, y + 22);
+
+        doc.text(factura.cliente.nombre, margen + 93, y + 10);
+        doc.text(`ID: ${factura.cliente.id}`, margen + 93, y + 14);
+        if (factura.cliente.telefono) doc.text(`Tel: ${factura.cliente.telefono}`, margen + 93, y + 18);
+        if (factura.cliente.email) doc.text(factura.cliente.email, margen + 93, y + 22);
+        if (factura.cliente.direccion) doc.text(`Dir: ${factura.cliente.direccion}`, margen + 93, y + 26);
+
+        // Método de pago
+        y += 33;
+        doc.setFillColor(245, 247, 250);
+        doc.rect(margen, y, anchoUtil, 8, 'F');
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(61, 82, 160);
+        doc.text('MÉTODO DE PAGO:', margen + 3, y + 5);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text(document.getElementById('metodoPago').value, margen + 45, y + 5);
+
+        // Tabla de productos
+        y += 13;
+        doc.setFillColor(61, 82, 160);
+        doc.rect(margen, y, anchoUtil + 4, 8, 'F');
+
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text('DESCRIPCIÓN', margen + 3, y + 5);
+        doc.text('CANT.', margen + 110, y + 5);
+        doc.text('PRECIO UNIT.', margen + 130, y + 5);
+        doc.text('TOTAL', margen + 160, y + 5);
+
+        y += 15;
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(9);
+
+        carrito.forEach(prod => {
+          if (y > 250) {
+            doc.addPage();
+            y = 20;
+          }
+
+          doc.text(prod.nombre, margen + 3, y);
+          doc.text(String(prod.cantidad), margen + 113, y);
+          doc.text(`${prod.precio.toLocaleString('es-CO')}`, margen + 130, y);
+          doc.text(`${(prod.precio * prod.cantidad).toLocaleString('es-CO')}`, margen + 160, y);
+          y += 6;
+        });
+
+        // Línea antes de totales
+        y += 3;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(margen, y, margen + anchoUtil, y);
+
+        // Totales
+        y += 8;
+        doc.setFontSize(10);
+        doc.text('Subtotal:', margen + 120, y);
+        doc.text(`${Math.round(calcularSubtotal()).toLocaleString('es-CO')}`, margen + 160, y);
+
+        y += 6;
+        doc.text('IVA (19%):', margen + 120, y);
+        doc.text(`${Math.round(calcularSubtotal() * 0.19).toLocaleString('es-CO')}`, margen + 160, y);
+
+        y += 8;
+        doc.setDrawColor(61, 82, 160);
+        doc.setLineWidth(0.5);
+        doc.line(margen + 115, y - 2, margen + anchoUtil, y - 2);
+
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(61, 82, 160);
+        doc.text('TOTAL A PAGAR:', margen + 120, y + 3);
+        doc.setFontSize(14);
+        doc.text(`${Math.round(factura.total).toLocaleString('es-CO')}`, margen + 160, y + 3);
+
+        // Observaciones
+        y += 15;
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(100, 100, 100);
+        doc.text('* Los precios incluyen IVA', margen, y);
+        doc.text('* Esta factura es válida como comprobante de pago', margen, y + 4);
+
+        // Footer
+        y += 15;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(margen, y, margen + anchoUtil, y);
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        y += 6;
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(61, 82, 160);
+        const text1 = '¡Gracias por su compra!';
+        const textWidth1 = doc.getTextWidth(text1);
+        doc.text(text1, (pageWidth - textWidth1) / 2, y);
+
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(100, 100, 100);
+        const text2 = 'Stocky - Soluciones de inventario para tu negocio';
+        const textWidth2 = doc.getTextWidth(text2);
+        doc.text(text2, (pageWidth - textWidth2) / 2, y + 5);
+
+        const text3 = 'www.stocky.com | Soporte: soporte@stocky.com | Tel: (601) 234-5678';
+        const textWidth3 = doc.getTextWidth(text3);
+        doc.text(text3, (pageWidth - textWidth3) / 2, y + 9);
+
+        // Guardar PDF
+        const nombreArchivo = `Factura_${factura.numero_factura}_${factura.cliente.nombre.replace(/\s+/g, '_')}.pdf`;
+        doc.save(nombreArchivo);
+
+      } catch (error) {
+        console.error('Error al generar PDF:', error);
+        throw new Error('Error al generar el PDF');
+      }
+    }
+
+    // Reset formulario
+    function resetFormulario() {
+      document.getElementById('clienteId').value = '';
+      document.getElementById('clienteNombre').value = '';
+      document.getElementById('clienteTelefono').value = '';
+      document.getElementById('clienteEmail').value = '';
+      document.getElementById('clienteDireccion').value = '';
+      document.getElementById('metodoPago').value = '';
+      document.getElementById('clienteEncontrado').innerHTML = '';
+
+      carrito = [];
+      document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.value = 0;
+      });
+
+      renderCarrito();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Funciones auxiliares
+    function mostrarExito(mensaje) {
+      alert(mensaje);
+    }
+
+    function mostrarError(mensaje) {
+      alert(mensaje);
+    }
+
+    // Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (!confirm('¿Estás seguro de cerrar sesión?')) return;
+
+      try {
+        await fetch(`${API_URL}/logout.php`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        window.location.href = '../index.html';
+      } catch (error) {
+        window.location.href = '../index.html';
+      }
+    });
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+      cargarDatosIniciales();
+    });
+  </script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Stockyツ</h3>
+        <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+      </div>
+
+      <div class="footer-section">
+        <h4>Enlaces Rápidos</h4>
+        <ul>
+          <li><a href="#">Inicio</a></li>
+          <li><a href="#">Inventario</a></li>
+          <li><a href="#">Ventas</a></li>
+          <li><a href="#">Reportes</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Soporte</h4>
+        <ul>
+          <li><a href="#">Ayuda</a></li>
+          <li><a href="#">Documentación</a></li>
+          <li><a href="#">Contacto</a></li>
+          <li><a href="#">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Contacto</h4>
+        <p>📧 info@Stocky.com</p>
+        <p>📞 +57 300 123 4567</p>
+        <p>📍 Bogotá, Colombia</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+</body>
+
+</html>

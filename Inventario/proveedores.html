@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Proveedores</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+    <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+  <main>
+    <div class="container">
+    <h1>Gestión de Proveedores</h1>
+
+    <div class="control-panel">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar por NIT o nombre de empresa...">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('add')">
+       Agregar Proveedor
+      </button>
+    </div>
+
+    <div class="table-container">
+      <table id="proveedorTable">
+        <thead>
+          <tr>
+            <th>NIT</th>
+            <th>Nombre de la Empresa</th>
+            <th>Teléfono</th>
+            <th>Productos que Provee</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal para Agregar/Editar -->
+  <div id="proveedorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Agregar Proveedor</h2>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <form id="proveedorForm">
+        <input type="hidden" id="originalNit">
+        <div class="form-group">
+          <label for="proveedorNit">NIT de la Empresa *</label>
+          <input type="text" id="proveedorNit" required placeholder="Ej: 900123456-7">
+        </div>
+        <div class="form-group">
+          <label for="proveedorNombre">Nombre de la Empresa *</label>
+          <input type="text" id="proveedorNombre" required placeholder="Ej: Distribuidora XYZ S.A.S">
+        </div>
+        <div class="form-group">
+          <label for="proveedorTelefono">Teléfono *</label>
+          <input type="tel" id="proveedorTelefono" required placeholder="Ej: 601-2345678">
+        </div>
+
+        <div class="productos-section">
+          <h3>Productos que Provee</h3>
+          <div id="productosContainer">
+            <div class="producto-item">
+              <select class="producto-select">
+                <option value="">Seleccionar producto...</option>
+              </select>
+              <button type="button" onclick="removeProducto(this)" title="Eliminar">🗑️</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary add-producto-btn" onclick="addProductoField()">
+            ➕ Agregar otro producto
+          </button>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-success" id="submitBtn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para Ver Productos -->
+  <div id="productosModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="productosModalTitle">Productos Provistos</h2>
+        <button class="close-btn" onclick="closeProductosModal()">×</button>
+      </div>
+      <div id="productosModalContent">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="closeProductosModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+
+  <footer class="footer">
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>Stockyツ</h3>
+      <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+    </div>
+
+    <div class="footer-section">
+      <h4>Enlaces Rápidos</h4>
+      <ul>
+        <li><a href="#">Inicio</a></li>
+        <li><a href="#">Inventario</a></li>
+        <li><a href="#">Ventas</a></li>
+        <li><a href="#">Reportes</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Soporte</h4>
+      <ul>
+        <li><a href="#">Ayuda</a></li>
+        <li><a href="#">Documentación</a></li>
+        <li><a href="#">Contacto</a></li>
+        <li><a href="#">FAQ</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-section">
+      <h4>Contacto</h4>
+      <p>📧 info@Stocky.com</p>
+      <p>📞 +57 300 123 4567</p>
+      <p>📍 Bogotá, Colombia</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<script>
+    const API_URL = 'http://localhost/stocky/api';
+    
+    let proveedores = [];
+    let productosDisponibles = [];
+    let currentEditNit = null;
+
+    // Cargar proveedores desde la API
+    async function cargarProveedores() {
+        try {
+            const response = await fetch(`${API_URL}/proveedores.php`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                proveedores = result.data;
+                renderTable();
+            } else {
+                mostrarError('Error al cargar proveedores: ' + result.message);
+                renderTable([]);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al conectar con el servidor');
+            renderTable([]);
+        }
+    }
+
+    // Cargar productos disponibles
+    async function cargarProductosDisponibles() {
+        try {
+            const response = await fetch(`${API_URL}/productos-disponibles.php`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                productosDisponibles = result.data;
+            } else {
+                mostrarError('Error al cargar productos: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar productos disponibles');
+        }
+    }
+
+    // Renderizar tabla
+    function renderTable(filteredProveedores = proveedores) {
+        const tbody = document.getElementById('tableBody');
+
+        if (filteredProveedores.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        <div>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            <p>No se encontraron proveedores</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = filteredProveedores.map(p => `
+            <tr>
+                <td><strong>${p.nit}</strong></td>
+                <td>${p.nombre_empresa}</td>
+                <td>${p.telefono}</td>
+                <td>
+                    <span class="badge">${p.total_productos} producto${p.total_productos !== 1 ? 's' : ''}</span>
+                    <button class="btn-icon btn-info" onclick="viewProductos('${p.nit}')" title="Ver productos" style="margin-left: 0.5rem;">👁️</button>
+                </td>
+                <td>
+                    <div class="actions">
+                        <button class="btn-icon btn-warning" onclick="editProveedor('${p.nit}')" title="Editar">✏️</button>
+                        <button class="btn-icon btn-danger" onclick="deleteProveedor('${p.nit}')" title="Eliminar">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Buscar proveedores
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = proveedores.filter(p => 
+            p.nit.toLowerCase().includes(searchTerm) ||
+            p.nombre_empresa.toLowerCase().includes(searchTerm)
+        );
+        renderTable(filtered);
+    });
+
+    // Llenar opciones de productos en los selects
+    function populateProductoSelect(selectElement) {
+        const selectedProductos = Array.from(document.querySelectorAll('.producto-select'))
+            .map(s => s.value)
+            .filter(v => v && v !== selectElement.value);
+
+        selectElement.innerHTML = '<option value="">Seleccionar producto...</option>';
+        
+        productosDisponibles.forEach(producto => {
+            if (!selectedProductos.includes(producto.codigo_producto) || selectElement.value === producto.codigo_producto) {
+                const option = document.createElement('option');
+                option.value = producto.codigo_producto;
+                option.textContent = producto.nombre;
+                selectElement.appendChild(option);
+            }
+        });
+    }
+
+    // Actualizar todos los selects
+    function updateAllSelects() {
+        document.querySelectorAll('.producto-select').forEach(select => {
+            const currentValue = select.value;
+            populateProductoSelect(select);
+            select.value = currentValue;
+        });
+    }
+
+    // Agregar campo de producto
+    function addProductoField() {
+        const container = document.getElementById('productosContainer');
+        const newItem = document.createElement('div');
+        newItem.className = 'producto-item';
+        newItem.innerHTML = `
+            <select class="producto-select">
+                <option value="">Seleccionar producto...</option>
+            </select>
+            <button type="button" onclick="removeProducto(this)" title="Eliminar">🗑️</button>
+        `;
+        container.appendChild(newItem);
+        
+        const newSelect = newItem.querySelector('.producto-select');
+        populateProductoSelect(newSelect);
+        newSelect.addEventListener('change', updateAllSelects);
+    }
+
+    // Remover campo de producto
+    function removeProducto(button) {
+        const items = document.querySelectorAll('.producto-item');
+        if (items.length > 1) {
+            button.closest('.producto-item').remove();
+            updateAllSelects();
+        } else {
+            alert('Debe haber al menos un campo de producto');
+        }
+    }
+
+    // Abrir modal
+    function openModal(mode, nit = null) {
+        const modal = document.getElementById('proveedorModal');
+        const form = document.getElementById('proveedorForm');
+        const title = document.getElementById('modalTitle');
+        const nitInput = document.getElementById('proveedorNit');
+        
+        form.reset();
+        currentEditNit = null;
+        
+        // Limpiar productos y agregar uno inicial
+        const container = document.getElementById('productosContainer');
+        container.innerHTML = `
+            <div class="producto-item">
+                <select class="producto-select">
+                    <option value="">Seleccionar producto...</option>
+                </select>
+                <button type="button" onclick="removeProducto(this)" title="Eliminar">🗑️</button>
+            </div>
+        `;
+        
+        const initialSelect = container.querySelector('.producto-select');
+        populateProductoSelect(initialSelect);
+        initialSelect.addEventListener('change', updateAllSelects);
+        
+        if (mode === 'edit' && nit) {
+            cargarProveedorParaEditar(nit);
+        } else {
+            title.textContent = 'Agregar Proveedor';
+            nitInput.readOnly = false;
+        }
+        
+        modal.classList.add('active');
+    }
+
+    // Cargar proveedor para editar
+    async function cargarProveedorParaEditar(nit) {
+        try {
+            const response = await fetch(`${API_URL}/proveedores.php?nit=${nit}`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const proveedor = result.data;
+                const title = document.getElementById('modalTitle');
+                const nitInput = document.getElementById('proveedorNit');
+                
+                title.textContent = 'Editar Proveedor';
+                document.getElementById('originalNit').value = proveedor.nit;
+                nitInput.value = proveedor.nit;
+                nitInput.readOnly = true;
+                document.getElementById('proveedorNombre').value = proveedor.nombre_empresa;
+                document.getElementById('proveedorTelefono').value = proveedor.telefono;
+                currentEditNit = nit;
+                
+                // Cargar productos
+                const container = document.getElementById('productosContainer');
+                container.innerHTML = '';
+                
+                if (proveedor.productos && proveedor.productos.length > 0) {
+                    proveedor.productos.forEach((productoId, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'producto-item';
+                        item.innerHTML = `
+                            <select class="producto-select">
+                                <option value="">Seleccionar producto...</option>
+                            </select>
+                            <button type="button" onclick="removeProducto(this)" title="Eliminar">🗑️</button>
+                        `;
+                        container.appendChild(item);
+                        
+                        const select = item.querySelector('.producto-select');
+                        populateProductoSelect(select);
+                        select.value = productoId;
+                        select.addEventListener('change', updateAllSelects);
+                    });
+                } else {
+                    // Agregar un campo vacío si no hay productos
+                    addProductoField();
+                }
+            } else {
+                mostrarError('Error al cargar proveedor: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar proveedor');
+        }
+    }
+
+    // Cerrar modal
+    function closeModal() {
+        document.getElementById('proveedorModal').classList.remove('active');
+    }
+
+    // Ver productos de un proveedor
+    async function viewProductos(nit) {
+        try {
+            const response = await fetch(`${API_URL}/proveedores.php?nit=${nit}`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const proveedor = result.data;
+                const modal = document.getElementById('productosModal');
+                const title = document.getElementById('productosModalTitle');
+                const content = document.getElementById('productosModalContent');
+                
+                title.textContent = `Productos - ${proveedor.nombre_empresa}`;
+                
+                if (proveedor.productos && proveedor.productos.length > 0) {
+                    // Obtener nombres de productos
+                    const productosNombres = await obtenerNombresProductos(proveedor.productos);
+                    
+                    content.innerHTML = `
+                        <div class="productos-list">
+                            ${productosNombres.map(nombre => 
+                                `<span class="producto-tag">${nombre}</span>`
+                            ).join('')}
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = '<p style="text-align: center; color: #757575;">No hay productos asignados</p>';
+                }
+                
+                modal.classList.add('active');
+            } else {
+                mostrarError('Error al cargar productos del proveedor');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar productos del proveedor');
+        }
+    }
+
+    // Obtener nombres de productos por sus IDs
+    async function obtenerNombresProductos(productosIds) {
+        try {
+            const nombres = [];
+            for (const id of productosIds) {
+                const producto = productosDisponibles.find(p => p.codigo_producto === id);
+                if (producto) {
+                    nombres.push(producto.nombre);
+                }
+            }
+            return nombres;
+        } catch (error) {
+            console.error('Error:', error);
+            return productosIds; // Devolver IDs si no se pueden obtener nombres
+        }
+    }
+
+    // Cerrar modal de productos
+    function closeProductosModal() {
+        document.getElementById('productosModal').classList.remove('active');
+    }
+
+    // Guardar proveedor
+    document.getElementById('proveedorForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nit = document.getElementById('proveedorNit').value.trim();
+        const nombre_empresa = document.getElementById('proveedorNombre').value.trim();
+        const telefono = document.getElementById('proveedorTelefono').value.trim();
+        
+        // Obtener productos seleccionados
+        const productos = Array.from(document.querySelectorAll('.producto-select'))
+            .map(s => s.value)
+            .filter(v => v);
+        
+        if (productos.length === 0) {
+            mostrarError('⚠️ Debe seleccionar al menos un producto');
+            return;
+        }
+        
+        // Verificar duplicados
+        const hasDuplicates = productos.length !== new Set(productos).size;
+        if (hasDuplicates) {
+            mostrarError('⚠️ No puede seleccionar el mismo producto varias veces');
+            return;
+        }
+        
+        const data = {
+            nit,
+            nombre_empresa,
+            telefono,
+            productos
+        };
+
+        try {
+            let response;
+            if (currentEditNit) {
+                // Actualizar
+                response = await fetch(`${API_URL}/proveedores.php`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(data)
+                });
+            } else {
+                // Crear
+                response = await fetch(`${API_URL}/proveedores.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(data)
+                });
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
+                mostrarExito(result.message);
+                await cargarProveedores();
+                closeModal();
+            } else {
+                mostrarError(result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al guardar el proveedor');
+        }
+    });
+
+    // Editar proveedor
+    function editProveedor(nit) {
+        openModal('edit', nit);
+    }
+
+    // Eliminar proveedor
+    async function deleteProveedor(nit) {
+        const proveedor = proveedores.find(p => p.nit === nit);
+        if (!confirm(`¿Estás seguro de eliminar el proveedor "${proveedor.nombre_empresa}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/proveedores.php`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ nit })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                mostrarExito(result.message);
+                await cargarProveedores();
+            } else {
+                mostrarError(result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al eliminar el proveedor');
+        }
+    }
+
+    // Funciones auxiliares
+    function mostrarExito(mensaje) {
+        alert('✅ ' + mensaje);
+    }
+
+    function mostrarError(mensaje) {
+        alert('❌ ' + mensaje);
+    }
+
+    // Cerrar modales al hacer clic fuera
+    document.getElementById('proveedorModal').addEventListener('click', (e) => {
+        if (e.target.id === 'proveedorModal') {
+            closeModal();
+        }
+    });
+
+    document.getElementById('productosModal').addEventListener('click', (e) => {
+        if (e.target.id === 'productosModal') {
+            closeProductosModal();
+        }
+    });
+
+    // Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (!confirm('¿Estás seguro de cerrar sesión?')) return;
+        
+        try {
+            await fetch(`${API_URL}/logout.php`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            window.location.href = '../index.html';
+        } catch (error) {
+            window.location.href = '../index.html';
+        }
+    });
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', async () => {
+        await cargarProductosDisponibles();
+        await cargarProveedores();
+    });
+</script>
+</body>
+</html>

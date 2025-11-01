@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stockyツ - Facturas</title>
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+
+<body>
+
+  <!-- Barra superior -->
+  <header class="navbar">
+    <a class="home-logo" href="../dashboard.html">
+      <div class="logo">Stockyツ</div>
+    </a>
+    <nav class="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#">Inventario ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Inventario/productos.html">Productos</a></li>
+            <li><a href="../Inventario/categorias.html">Categorías</a></li>
+            <li><a href="../Inventario/presentaciones.html">Presentaciones</a></li>
+            <li><a href="../Inventario/proveedores.html">Proveedores</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Ventas ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Ventas/facturas.html">Facturas</a></li>
+            <li><a href="../Ventas/registrarVenta.html">Generar Factura</a></li>
+            <li><a href="../Ventas/metodoPago.html">Métodos de Pago</a></li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="#">Administración ▾</a>
+          <ul class="dropdown-menu">
+            <li><a href="../Administracion/vendedores.html">Usuarios</a></li>
+            <li><a href="../Administracion/clientes.html">Clientes</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
+  </header>
+
+  <!-- Contenido principal -->
+
+  <main>
+    <div class="container">
+      <h1>Gestión de Facturas</h1>
+
+      <!-- Estadísticas -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-value" id="totalFacturas">0</div>
+          <div class="stat-label">Total Facturas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalVentas">$0</div>
+          <div class="stat-label">Total en Ventas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="facturasHoy">0</div>
+          <div class="stat-label">Facturas Hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="facturasMes">0</div>
+          <div class="stat-label">Facturas este Mes</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-section">
+        <div class="filtros-grid">
+          <div class="form-group">
+            <label for="buscarFactura">🔍 Buscar por No. Factura o Cliente</label>
+            <input type="text" id="buscarFactura" placeholder="Ej: 0001 o Juan Pérez">
+          </div>
+          <div class="form-group">
+            <label for="fechaDesde">📅 Desde</label>
+            <input type="date" id="fechaDesde">
+          </div>
+          <div class="form-group">
+            <label for="fechaHasta">📅 Hasta</label>
+            <input type="date" id="fechaHasta">
+          </div>
+          <div class="form-group">
+            <label style="opacity: 0;">Filtrar</label>
+            <button class="btn btn-primary" onclick="aplicarFiltros()">Filtrar</button>
+          </div>
+          <div class="form-group">
+            <label style="opacity: 0;">Limpiar</label>
+            <button class="btn btn-secondary" onclick="limpiarFiltros()">Limpiar Filtros</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Facturas -->
+      <div class="facturas-container">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>No. Factura</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Vendedor</th>
+                <th>Método Pago</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="facturasTableBody">
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination">
+          <button onclick="cambiarPagina('primera')" id="btnPrimera">« Primera</button>
+          <button onclick="cambiarPagina('anterior')" id="btnAnterior">‹ Anterior</button>
+          <span class="pagination-info" id="paginacionInfo">Página 1 de 1</span>
+          <button onclick="cambiarPagina('siguiente')" id="btnSiguiente">Siguiente ›</button>
+          <button onclick="cambiarPagina('ultima')" id="btnUltima">Última »</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de Detalle -->
+  <div id="detalleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalle de Factura</h2>
+        <button class="close-btn" onclick="cerrarModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="detalleContent" class="factura-detalle">
+        </div>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <script>
+    const API_URL = 'http://localhost/stocky/api';
+    
+    // Variables de paginación
+    let paginaActual = 1;
+    const facturasPorPagina = 10;
+    let facturasFiltradas = [];
+    let facturasDB = [];
+
+    // Actualizar estadísticas desde la API
+    async function actualizarEstadisticas() {
+        try {
+            const response = await fetch(`${API_URL}/estadisticas-facturas.php`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                const stats = result.data;
+                document.getElementById('totalFacturas').textContent = stats.total_facturas;
+                document.getElementById('totalVentas').textContent = `$${Math.round(stats.total_ventas).toLocaleString('es-CO')}`;
+                document.getElementById('facturasHoy').textContent = stats.facturas_hoy;
+                document.getElementById('facturasMes').textContent = stats.facturas_mes;
+            } else {
+                console.error('Error al cargar estadísticas:', result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Cargar facturas desde la API
+    async function cargarFacturas() {
+        try {
+            const params = new URLSearchParams({
+                page: paginaActual,
+                limit: facturasPorPagina,
+                busqueda: document.getElementById('buscarFactura').value,
+                fecha_desde: document.getElementById('fechaDesde').value,
+                fecha_hasta: document.getElementById('fechaHasta').value
+            });
+
+            const response = await fetch(`${API_URL}/facturas.php?${params}`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                facturasDB = result.data.facturas;
+                facturasFiltradas = facturasDB;
+                renderizarTabla();
+                actualizarPaginacion(result.data.paginacion);
+            } else {
+                mostrarError('Error al cargar facturas: ' + result.message);
+                renderizarTabla([]);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar facturas');
+            renderizarTabla([]);
+        }
+    }
+
+    // Renderizar tabla
+    function renderizarTabla() {
+        const tbody = document.getElementById('facturasTableBody');
+
+        if (facturasFiltradas.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <p style="font-size: 3rem;">📋</p>
+                        <p style="font-size: 1.1rem; font-weight: 600;">No se encontraron facturas</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Intenta con otros filtros de búsqueda</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = facturasFiltradas.map(factura => `
+            <tr>
+                <td class="factura-numero">#${factura.numero}</td>
+                <td>${new Date(factura.fecha).toLocaleDateString('es-CO', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                })}</td>
+                <td>${factura.cliente.nombre}</td>
+                <td>${factura.vendedor.nombre}</td>
+                <td>${factura.metodoPago}</td>
+                <td class="factura-total">$${Math.round(factura.total).toLocaleString('es-CO')}</td>
+                <td><span class="badge badge-success">${factura.estado}</span></td>
+                <td>
+                    <button class="btn btn-info" onclick='verDetalle("${factura.numero}")'>
+                        Ver Detalle
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Actualizar paginación
+    function actualizarPaginacion(paginacion) {
+        const totalPaginas = paginacion.total_paginas;
+
+        document.getElementById('paginacionInfo').textContent =
+            `Página ${paginaActual} de ${totalPaginas} (${paginacion.total_registros} facturas)`;
+
+        document.getElementById('btnPrimera').disabled = paginaActual === 1;
+        document.getElementById('btnAnterior').disabled = paginaActual === 1;
+        document.getElementById('btnSiguiente').disabled = paginaActual === totalPaginas || totalPaginas === 0;
+        document.getElementById('btnUltima').disabled = paginaActual === totalPaginas || totalPaginas === 0;
+    }
+
+    // Cambiar página
+    function cambiarPagina(accion) {
+        switch (accion) {
+            case 'primera':
+                paginaActual = 1;
+                break;
+            case 'anterior':
+                if (paginaActual > 1) paginaActual--;
+                break;
+            case 'siguiente':
+                // Usaremos la información de paginación del servidor para saber si hay más páginas
+                paginaActual++;
+                break;
+            case 'ultima':
+                // Cargaremos la última página desde el servidor
+                paginaActual = 999; // Se ajustará cuando carguemos los datos
+                break;
+        }
+
+        cargarFacturas();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Aplicar filtros
+    function aplicarFiltros() {
+        paginaActual = 1;
+        cargarFacturas();
+    }
+
+    // Limpiar filtros
+    function limpiarFiltros() {
+        document.getElementById('buscarFactura').value = '';
+        document.getElementById('fechaDesde').value = '';
+        document.getElementById('fechaHasta').value = '';
+
+        paginaActual = 1;
+        cargarFacturas();
+    }
+
+    // Búsqueda en tiempo real
+    document.getElementById('buscarFactura').addEventListener('input', function() {
+        if (this.value.length >= 3 || this.value.length === 0) {
+            aplicarFiltros();
+        }
+    });
+
+    // Ver detalle de factura desde la API
+    async function verDetalle(numeroFactura) {
+        try {
+            const response = await fetch(`${API_URL}/detalle-factura.php?numero_factura=${numeroFactura}`, {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (!result.success) {
+                alert('Factura no encontrada');
+                return;
+            }
+
+            const factura = result.data;
+            const modal = document.getElementById('detalleModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const detalleContent = document.getElementById('detalleContent');
+
+            modalTitle.textContent = `Factura #${factura.numero}`;
+
+            detalleContent.innerHTML = `
+                <!-- Información General -->
+                <div class="detalle-section">
+                    <h3>Información General</h3>
+                    <div class="detalle-grid">
+                        <div class="detalle-item">
+                            <div class="detalle-label">Número de Factura</div>
+                            <div class="detalle-value">#${factura.numero}</div>
+                        </div>
+                        <div class="detalle-item">
+                            <div class="detalle-label">Fecha y Hora</div>
+                            <div class="detalle-value">${new Date(factura.fecha).toLocaleDateString('es-CO', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}</div>
+                        </div>
+                        <div class="detalle-item">
+                            <div class="detalle-label">Estado</div>
+                            <div class="detalle-value">
+                                <span class="badge badge-success">${factura.estado}</span>
+                            </div>
+                        </div>
+                        <div class="detalle-item">
+                            <div class="detalle-label">Método de Pago</div>
+                            <div class="detalle-value">${factura.metodoPago}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Cliente -->
+                <div class="detalle-section">
+                    <h3> Cliente</h3>
+                    <div class="detalle-grid">
+                        <div class="detalle-item">
+                            <div class="detalle-label">Nombre Completo</div>
+                            <div class="detalle-value">${factura.cliente.nombre}</div>
+                        </div>
+                        <div class="detalle-item">
+                            <div class="detalle-label">Documento</div>
+                            <div class="detalle-value">${factura.cliente.id}</div>
+                        </div>
+                        ${factura.cliente.telefono ? `
+                        <div class="detalle-item">
+                            <div class="detalle-label">Teléfono</div>
+                            <div class="detalle-value">${factura.cliente.telefono}</div>
+                        </div>
+                        ` : ''}
+                        ${factura.cliente.email ? `
+                        <div class="detalle-item">
+                            <div class="detalle-label">Email</div>
+                            <div class="detalle-value">${factura.cliente.email}</div>
+                        </div>
+                        ` : ''}
+                        ${factura.cliente.direccion ? `
+                        <div class="detalle-item">
+                            <div class="detalle-label">Dirección</div>
+                            <div class="detalle-value">${factura.cliente.direccion}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Información del Vendedor -->
+                <div class="detalle-section">
+                    <h3>Vendedor</h3>
+                    <div class="detalle-grid">
+                        <div class="detalle-item">
+                            <div class="detalle-label">Nombre Completo</div>
+                            <div class="detalle-value">${factura.vendedor.nombre}</div>
+                        </div>
+                        <div class="detalle-item">
+                            <div class="detalle-label">Documento</div>
+                            <div class="detalle-value">${factura.vendedor.documento}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Productos -->
+                <div class="detalle-section">
+                    <h3>Productos Vendidos</h3>
+                    <table class="productos-detalle-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th style="text-align: center;">Cantidad</th>
+                                <th style="text-align: right;">Precio Unitario</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${factura.productos.map(prod => `
+                                <tr>
+                                    <td>${prod.nombre}</td>
+                                    <td style="text-align: center;">${prod.cantidad} ${prod.presentacion || ''}</td>
+                                    <td style="text-align: right;">$${prod.precio.toLocaleString('es-CO')}</td>
+                                    <td style="text-align: right; font-weight: 600;">$${(prod.precio * prod.cantidad).toLocaleString('es-CO')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Totales -->
+                <div class="detalle-section">
+                    <h3>Resumen de Pago</h3>
+                    <div class="totales-detalle">
+                        <div class="total-row-detalle">
+                            <span>Subtotal:</span>
+                            <span>$${Math.round(factura.subtotal).toLocaleString('es-CO')}</span>
+                        </div>
+                        <div class="total-row-detalle">
+                            <span>IVA (19%):</span>
+                            <span>$${Math.round(factura.iva).toLocaleString('es-CO')}</span>
+                        </div>
+                        <div class="total-row-detalle final">
+                            <span>TOTAL PAGADO:</span>
+                            <span>$${Math.round(factura.total).toLocaleString('es-CO')}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al cargar el detalle de la factura');
+        }
+    }
+
+    // Cerrar modal
+    function cerrarModal() {
+        document.getElementById('detalleModal').classList.remove('active');
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('detalleModal').addEventListener('click', function(e) {
+        if (e.target.id === 'detalleModal') {
+            cerrarModal();
+        }
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModal();
+        }
+    });
+
+    // Inicializar
+    async function inicializar() {
+        await actualizarEstadisticas();
+        await cargarFacturas();
+    }
+
+    // Cerrar sesión
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (confirm('¿Estás seguro de cerrar sesión?')) {
+            try {
+                await fetch(`${API_URL}/logout.php`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                // Continuar aunque falle
+            }
+            window.location.href = '../index.html';
+        }
+    });
+
+    // Funciones auxiliares
+    function mostrarError(mensaje) {
+        alert('❌ ' + mensaje);
+    }
+
+    // Cargar todo al iniciar
+    document.addEventListener('DOMContentLoaded', inicializar);
+</script>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Stockyツ</h3>
+        <p>Sistema de gestión de inventario y ventas para tu negocio.</p>
+      </div>
+
+      <div class="footer-section">
+        <h4>Enlaces Rápidos</h4>
+        <ul>
+          <li><a href="#">Inicio</a></li>
+          <li><a href="#">Inventario</a></li>
+          <li><a href="#">Ventas</a></li>
+          <li><a href="#">Reportes</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Soporte</h4>
+        <ul>
+          <li><a href="#">Ayuda</a></li>
+          <li><a href="#">Documentación</a></li>
+          <li><a href="#">Contacto</a></li>
+          <li><a href="#">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Contacto</h4>
+        <p>📧 info@Stocky.com</p>
+        <p>📞 +57 300 123 4567</p>
+        <p>📍 Bogotá, Colombia</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Stockyツ. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+</body>
+
+</html>
