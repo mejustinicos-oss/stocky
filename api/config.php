@@ -14,12 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 
 // Configuración de la base de datos
-define('DB_HOST', getenv('DB_HOST'));
-define('DB_NAME', getenv('DB_NAME'));
-define('DB_USER', getenv('DB_USER'));           // Cambia esto según tu configuración
-define('DB_PASS', getenv('DB_PASS'));               // Cambia esto según tu configuración
-define('DB_PORT', getenv('DB_PORT'));             // Cambia esto según tu configuración
-
+// Configuración de la base de datos con valores por defecto
+define('DB_HOST', getenv('DB_HOST') ?: 'mysql');
+define('DB_NAME', getenv('DB_NAME') ?: 'databasestocky');
+define('DB_USER', getenv('DB_USER') ?: 'admin');
+define('DB_PASS', getenv('DB_PASS') ?: '3215556611xd');
+define('DB_PORT', getenv('DB_PORT') ?: '3307');
 // Crear conexión
 function getConnection() {
     try {
