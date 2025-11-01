@@ -13,17 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 
-// Configuración de la base de datos
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'stocky_db');
-define('DB_USER', 'root');           // Cambia esto según tu configuración
-define('DB_PASS', 'root');               // Cambia esto según tu configuración
 
+
+// Configuración de la base de datos
+define('DB_HOST', getenv('DB_HOST'));
+define('DB_NAME', getenv('DB_NAME'));
+define('DB_USER', getenv('DB_USER'));           // Cambia esto según tu configuración
+define('DB_PASS', getenv('DB_PASS'));               // Cambia esto según tu configuración
+define('DB_PORT', getenv('DB_PORT'));
 // Crear conexión
 function getConnection() {
     try {
         $conn = new PDO(
-            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+            "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
             DB_USER,
             DB_PASS,
             [
