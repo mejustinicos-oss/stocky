@@ -15,7 +15,7 @@ services:
       DB_NAME: databasestocky
       DB_USER: admin
       DB_PASS: 3215556611xd
-      DB_PORT: 3306
+      DB_PORT: 3307
     command: >
       bash -c "
       docker-php-ext-install pdo pdo_mysql &&
