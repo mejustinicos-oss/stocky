@@ -13,14 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 
-// Configuración de la base de datos
-// Configuración de la base de datos con valores por defecto
-define('DB_HOST', getenv('DB_HOST') ?: 'nwk4o8wokoc0o8g0owgk0w0w');
-define('DB_NAME', getenv('DB_NAME') ?: 'databasestocky');
-define('DB_USER', getenv('DB_USER') ?: 'admin');
-define('DB_PASS', getenv('DB_PASS') ?: '3215556611xd');
-define('DB_PORT', getenv('DB_PORT') ?: '3307');
-// Crear conexión
+
 function getConnection() {
     try {
     $conn = new PDO(
