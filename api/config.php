@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Configuración de la base de datos desde variables de entorno
-define('DB_HOST', getenv('DB_HOST') ?: 'database-maicol');
+define('DB_HOST', getenv('DB_HOST') ?: 'wk4o8wokoc0o8g0owgk0w0w');
 define('DB_NAME', getenv('DB_NAME') ?: 'databasestocky');
 define('DB_USER', getenv('DB_USER') ?: 'admin');
 define('DB_PASS', getenv('DB_PASS') ?: '3215556611xd');
