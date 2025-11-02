@@ -12,50 +12,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Configuración de la base de datos desde variables de entorno
-define('DB_HOST', getenv('DB_HOST') ?: 'db');
-define('DB_NAME', getenv('DB_NAME') ?: 'databasestocky');
-define('DB_USER', getenv('DB_USER') ?: 'admin');
-define('DB_PASS', getenv('DB_PASS') ?: '3215556611xd');
-define('DB_PORT', getenv('DB_PORT') ?: '3307');
+// Configuración de la base de datos
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'stocky_db');
+define('DB_USER', 'root');           // Cambia esto según tu configuración
+define('DB_PASS', 'root');               // Cambia esto según tu configuración
 
 // Crear conexión
 function getConnection() {
     try {
-        $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        
         $conn = new PDO(
-            $dsn,
+            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
             DB_USER,
             DB_PASS,
             [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::ATTR_TIMEOUT => 5 // Timeout de 5 segundos
+                PDO::ATTR_EMULATE_PREPARES => false
             ]
         );
         return $conn;
     } catch (PDOException $e) {
-        // Log más detallado para debugging
-        error_log("Error de conexión DB: " . $e->getMessage());
-        error_log("Host: " . DB_HOST . ", Port: " . DB_PORT . ", DB: " . DB_NAME . ", User: " . DB_USER);
-        
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Error de conexión: ' . $e->getMessage(),
-            'debug' => [
-                'host' => DB_HOST,
-                'port' => DB_PORT,
-                'database' => DB_NAME,
-                'user' => DB_USER
-            ]
+            'message' => 'Error de conexión: ' . $e->getMessage()
         ]);
         exit();
     }
 }
-
 // Función para responder con JSON
 function sendResponse($success, $data = null, $message = '') {
     echo json_encode([

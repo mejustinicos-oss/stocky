@@ -49,5 +49,5 @@ const API_CONFIG = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
-    TIMEOUT: 30000 // 30 segundos
+    
 };
