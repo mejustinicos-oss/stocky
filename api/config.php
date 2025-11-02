@@ -17,7 +17,7 @@ define('DB_HOST', 'database-maicol');
 define('DB_NAME', 'databasestocky');
 define('DB_USER', 'admin');
 define('DB_PASS', '3215556611xd');
-define('DB_PORT', '3306');
+define('DB_PORT', '3307');
 
 // Crear conexión
 function getConnection() {
